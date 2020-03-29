@@ -1,4 +1,5 @@
 .classpath
+.gradle
 .project
 .settings
 eclipsebin
@@ -8,17 +9,23 @@ gen
 build
 out
 lib
-
-target
-pom.xml.*
-release.properties
+reports
 
 .idea
 *.iml
 *.ipr
 *.iws
 classes
+local.properties
 
 obj
 
 .DS_Store
+
+node_modules
+
+# Special Mkdocs files
+docs/2.x
+docs/changelog.md
+docs/contributing.md
+docs/index.md

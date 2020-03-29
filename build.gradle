@@ -1,0 +1,83 @@
+buildscript {
+  ext.versions = [
+      'kotlin': '1.3.70',
+      'jmhPlugin': '0.4.8',
+      'animalSnifferPlugin': '1.5.0',
+      'dokka': '0.10.0',
+      'jmh': '1.21',
+      'animalSniffer': '1.16',
+      'junit': '4.12',
+      'assertj': '1.7.0',
+      'shadowPlugin': '4.0.4',
+      'ktlintPlugin': '8.2.0',
+  ]
+
+  ext.deps = [
+      'kotlin': [
+          'gradlePlugin': "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}",
+          'stdLib': [
+              'common': "org.jetbrains.kotlin:kotlin-stdlib-common",
+              'jdk8': "org.jetbrains.kotlin:kotlin-stdlib-jdk8",
+              'jdk7': "org.jetbrains.kotlin:kotlin-stdlib-jdk7",
+              'jdk6': "org.jetbrains.kotlin:kotlin-stdlib",
+              'js': "org.jetbrains.kotlin:kotlin-stdlib-js",
+          ],
+          'test': [
+              'common': "org.jetbrains.kotlin:kotlin-test-common",
+              'annotations': "org.jetbrains.kotlin:kotlin-test-annotations-common",
+              'jdk': "org.jetbrains.kotlin:kotlin-test-junit",
+              'js': "org.jetbrains.kotlin:kotlin-test-js",
+          ],
+      ],
+      'jmh': [
+          'gradlePlugin': "me.champeau.gradle:jmh-gradle-plugin:${versions.jmhPlugin}",
+          'core': "org.openjdk.jmh:jmh-core:${versions.jmh}",
+          'generator': "org.openjdk.jmh:jmh-generator-annprocess:${versions.jmh}",
+      ],
+      'animalSniffer': [
+          'gradlePlugin': "ru.vyarus:gradle-animalsniffer-plugin:${versions.animalSnifferPlugin}",
+          'annotations': "org.codehaus.mojo:animal-sniffer-annotations:${versions.animalSniffer}",
+      ],
+      'japicmp': 'me.champeau.gradle:japicmp-gradle-plugin:0.2.8',
+      'dokka': "org.jetbrains.dokka:dokka-gradle-plugin:${versions.dokka}",
+      'shadow': "com.github.jengelman.gradle.plugins:shadow:${versions.shadowPlugin}",
+      'ktlint': "org.jlleitschuh.gradle:ktlint-gradle:${versions.ktlintPlugin}",
+      'test': [
+          'junit': "junit:junit:${versions.junit}",
+          'assertj': "org.assertj:assertj-core:${versions.assertj}",
+      ]
+  ]
+
+  dependencies {
+    classpath deps.kotlin.gradlePlugin
+    classpath deps.animalSniffer.gradlePlugin
+    classpath deps.japicmp
+    classpath deps.dokka
+    classpath deps.shadow
+    classpath deps.jmh.gradlePlugin
+    classpath deps.ktlint
+    // https://github.com/melix/japicmp-gradle-plugin/issues/36
+    classpath 'com.google.guava:guava:28.2-jre'
+  }
+
+  repositories {
+    mavenCentral()
+    gradlePluginPortal()
+    maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
+  }
+}
+
+allprojects {
+  group = GROUP
+  version = VERSION_NAME
+}
+
+subprojects {
+  repositories {
+    mavenCentral()
+    jcenter()
+    maven { url 'https://dl.bintray.com/kotlin/kotlin-eap' }
+  }
+
+  apply plugin: "org.jlleitschuh.gradle.ktlint"
+}

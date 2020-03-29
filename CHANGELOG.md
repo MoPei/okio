@@ -1,6 +1,268 @@
 Change Log
 ==========
 
+## Version 2.5.0
+
+_2020-03-20_
+
+ * New: Upgrade to Kotlin 1.3.70.
+
+
+## Version 2.4.3
+
+_2019-12-20_
+
+ * New: Upgrade to Kotlin 1.3.61.
+
+
+## Version 2.4.2
+
+_2019-12-11_
+
+ * Fix: Don't crash when an `InputStream` source is exhausted exactly at a buffer segment boundary.
+   We had a bug where a sequence of reads could violate a buffer's invariants, and this could result
+   in a crash when subsequent reads encountered an unexpected empty segment.
+
+
+## Version 1.17.5
+
+_2019-12-11_
+
+ * Fix: Don't crash when an `InputStream` source is exhausted exactly at a buffer segment boundary.
+   We had a bug where a sequence of reads could violate a buffer's invariants, and this could result
+   in a crash when subsequent reads encountered an unexpected empty segment.
+
+
+### Version 2.4.1
+
+_2019-10-04_
+
+ * Fix: Don't cache hash code and UTF-8 string in `ByteString` on Kotlin/Native which prevented freezing.
+
+### Version 2.4.0
+
+_2019-08-26_
+
+ * New: Upgrade to Kotlin 1.3.50.
+
+
+### Version 2.3.0
+
+_2019-07-29_
+
+**This release changes our build from Kotlin-JVM to Kotlin-multiplatform (which includes JVM).**
+Both native and JavaScript platforms are unstable preview releases and subject to
+backwards-incompatible changes in forthcoming releases.
+
+To try Okio in a multiplatform project use this Maven coordinate:
+
+```kotlin
+api('com.squareup.okio:okio-multiplatform:2.3.0')
+```
+
+You’ll also need to [enable Gradle metadata][gradle_metadata] in your project's settings. The
+artifact name for JVM projects has not changed.
+
+ * New: Upgrade to Kotlin 1.3.40.
+ * Fix: Use Gradle `api` instead of `implementation` for the kotlin-stdlib dependency.
+ * Fix: Don't block unless strictly necessary in `BufferedSource.peek()`.
+
+## Version 1.17.4
+
+_2019-04-29_
+
+ * Fix: Don't block unless strictly necessary in `BufferedSource.peek()`.
+
+
+## Version 2.2.2
+
+_2019-01-28_
+
+ * Fix: Make `Pipe.fold()` close the underlying sink when necessary.
+
+
+## Version 1.17.3
+
+_2019-01-28_
+
+ * Fix: Make `Pipe.fold()` close the underlying sink when necessary.
+
+
+## Version 1.17.2
+
+_2019-01-17_
+
+ * Fix: Make `Pipe.fold()` flush the underlying sink.
+
+
+## Version 2.2.1
+
+_2019-01-17_
+
+ * Fix: Make `Pipe.fold()` flush the underlying sink.
+
+
+## Version 2.2.0
+
+_2019-01-16_
+
+ * New: `Throttler` limits sources and sinks to a maximum desired throughput. Multiple sources and
+   sinks can be attached to the same throttler and their combined throughput will not exceed the
+   desired throughput. Multiple throttlers can also be used on the same source or sink and they will
+   all be honored.
+
+ * New: `Pipe.fold()` replaces the actively-readable `Source` with a passively-writable `Sink`.
+   This can be used to forward one sink to a target that is initially undetermined.
+
+ * New: Optimize performance of ByteStrings created with `Buffer.snapshot()`.
+
+
+## Version 1.17.1
+
+_2019-01-16_
+
+ * Fix: Make the newly-backported `Pipe.fold()` public.
+
+
+## Version 1.17.0
+
+_2019-01-16_
+
+ * New: Backport `Pipe.fold()` to Okio 1.x.
+
+
+## Version 1.16.0
+
+_2018-10-08_
+
+ * New: Backport `BufferedSource.peek()` and `BufferedSource.getBuffer()` to Okio 1.x.
+ * Fix: Enforce timeouts when closing `AsyncTimeout` sources.
+
+
+## Version 2.1.0
+
+_2018-09-22_
+
+ * New: `BufferedSource.peek()` returns another `BufferedSource` that reads ahead on the current
+   source. Use this to process the same data multiple times.
+
+ * New: Deprecate `BufferedSource.buffer()`, replacing it with either `BufferedSource.getBuffer()`
+   (in Java) or `BufferedSource.buffer` (in Kotlin). We have done likewise for `BufferedSink`.
+   When we introduced the new extension method `Source.buffer()` in Okio 2.0 we inadvertently
+   collided with an existing method. This fixes that.
+
+ * New: Improve performance of `Buffer.writeUtf8()`. This comes alongside initial implementation of
+   UTF-8 encoding and decoding in JavaScript which [uses XOR masks][xor_utf8] for great performance.
+
+
+## Version 2.0.0
+
+_2018-08-27_
+
+This release commits to a stable 2.0 API. Read the 2.0.0-RC1 changes for advice on upgrading from
+1.x to 2.x.
+
+We've also added APIs to ease migration for Kotlin users. They use Kotlin's `@Deprecated` annotation
+to help you change call sites from the 1.x style to the 2.x style.
+
+
+## Version 2.0.0-RC1
+
+_2018-07-26_
+
+Okio 2 is a major release that upgrades the library's implementation language from Java to Kotlin.
+
+Okio 2.x is **binary-compatible** with Okio 1.x and does not change any behavior. Classes and .jar
+files compiled against 1.x can be used with 2.x without recompiling.
+
+Okio 2.x is **.java source compatible** with Okio 1.x in all but one corner case. In Okio 1.x
+`Buffer` would throw an unchecked `IllegalStateException` when attempting to read more bytes than
+available. Okio 2.x now throws a checked `EOFException` in this case. This is now consistent with
+the behavior of its `BufferedSource` interface. Java callers that don't already catch `IOException`
+will now need to.
+
+Okio 2.x is **.kt source-incompatible** with Okio 1.x. This release adopts Kotlin idioms where they
+are available.
+
+| Java                                     |  Kotlin                              | Idiom              |
+| :--------------------------------------- |  :---------------------------------- | :----------------- |
+| Buffer.getByte()                         |  operator fun Buffer.get()           | operator function  |
+| Buffer.size()                            |  val Buffer.size                     | val                |
+| ByteString.decodeBase64(String)          |  fun String.decodeBase64()           | extension function |
+| ByteString.decodeHex(String)             |  fun String.decodeHex()              | extension function |
+| ByteString.encodeString(String, Charset) |  fun String.encode(Charset)          | extension function |
+| ByteString.encodeUtf8(String)            |  fun String.encodeUtf8()             | extension function |
+| ByteString.getByte()                     |  operator fun ByteString.get()       | operator function  |
+| ByteString.of(ByteBuffer)                |  fun ByteBuffer.toByteString()       | extension function |
+| ByteString.of(byte[], int, int)          |  fun ByteArray.toByteString()        | extension function |
+| ByteString.read(InputStream, int)        |  fun InputStream.readByteString(Int) | extension function |
+| ByteString.size()                        |  val ByteString.size                 | val                |
+| DeflaterSink(Sink)                       |  fun Sink.deflater()                 | extension function |
+| ForwardingSink.delegate()                |  val ForwardingSink.delegate         | val                |
+| ForwardingSource.delegate()              |  val ForwardingSource.delegate       | val                |
+| GzipSink(Sink, Deflater)                 |  fun Sink.gzip()                     | extension function |
+| GzipSink.deflater()                      |  val GzipSink.deflater               | val                |
+| GzipSource(Source)                       |  fun Source.gzip()                   | extension function |
+| HashingSink.hash()                       |  val HashingSink.hash                | val                |
+| HashingSource.hash()                     |  val HashingSource.hash              | val                |
+| InflaterSink(Source)                     |  fun Source.inflater()               | extension function |
+| Okio.appendingSink(File)                 |  fun File.appendingSink()            | extension function |
+| Okio.blackhole()                         |  fun blackholeSink()                 | top level function |
+| Okio.buffer(Sink)                        |  fun Sink.buffer()                   | extension function |
+| Okio.buffer(Source)                      |  fun Source.buffer()                 | extension function |
+| Okio.sink(File)                          |  fun File.sink()                     | extension function |
+| Okio.sink(OutputStream)                  |  fun OutputStream.sink()             | extension function |
+| Okio.sink(Path)                          |  fun Path.sink()                     | extension function |
+| Okio.sink(Socket)                        |  fun Socket.sink()                   | extension function |
+| Okio.source(File)                        |  fun File.source()                   | extension function |
+| Okio.source(InputStream)                 |  fun InputStream.source()            | extension function |
+| Okio.source(Path)                        |  fun Path.source()                   | extension function |
+| Okio.source(Socket)                      |  fun Socket.source()                 | extension function |
+| Pipe.sink()                              |  val Pipe.sink                       | val                |
+| Pipe.source()                            |  val Pipe.source                     | val                |
+| Utf8.size(String)                        |  fun String.utf8Size()               | extension function |
+
+Okio 2.x has **similar performance** to Okio 1.x. We benchmarked both versions to find potential
+performance regressions. We found one regression and fixed it: we were using `==` instead of `===`.
+
+Other changes in this release:
+
+ * New: Add a dependency on kotlin-stdlib. Okio's transitive dependencies grow from none in 1.x to
+   three in 2.x. These are kotlin-stdlib (939 KiB), kotlin-stdlib-common (104 KiB), and JetBrains'
+   annotations (17 KiB).
+
+ * New: Change Okio to build with Gradle instead of Maven.
+
+
+## Version 1.15.0
+
+_2018-07-18_
+
+ * New: Trie-based `Buffer.select()`. This improves performance when selecting
+   among large lists of options.
+ * Fix: Retain interrupted state when throwing `InterruptedIOException`.
+
+
+## Version 1.14.0
+
+_2018-02-11_
+
+ * New: `Buffer.UnsafeCursor` provides direct access to Okio internals. This API
+   is like Okio's version of Java reflection: it's a very powerful API that can
+   be used for great things and dangerous things alike. The documentation is
+   extensive and anyone using it should review it carefully before proceeding!
+ * New: Change `BufferedSource` to implement `java.nio.ReadableByteChannel` and
+   `BufferedSink` to implement `java.nio.WritableByteChannel`. Now it's a little
+   easier to interop between Okio and NIO.
+ * New: Automatic module name of `okio` for use with the Java Platform Module
+   System.
+ * New: Optimize `Buffer.getByte()` to search backwards when doing so will be
+   more efficient.
+ * Fix: Honor the requested byte count in `InflaterSource`. Previously this
+   class could return more bytes than requested.
+ * Fix: Improve a performance bug in `AsyncTimeout.sink().write()`.
+
+
 ## Version 1.13.0
 
 _2017-05-12_
@@ -266,3 +528,5 @@ _2014-04-08_
 
 
  [maven_provided]: https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html
+ [xor_utf8]: https://github.com/square/okio/blob/bbb29c459e5ccf0f286e0b17ccdcacd7ac4bc2a9/okio/src/main/kotlin/okio/Utf8.kt#L302
+ [gradle_metadata]: https://blog.gradle.org/gradle-metadata-1.0
