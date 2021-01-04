@@ -16,6 +16,14 @@
 
 package okio
 
+@ExperimentalFilesystem
+internal expect val PLATFORM_FILESYSTEM: Filesystem
+
+@ExperimentalFilesystem
+internal expect val PLATFORM_TEMPORARY_DIRECTORY: Path
+
+internal expect val DIRECTORY_SEPARATOR: String
+
 internal expect fun ByteArray.toUtf8String(): String
 
 internal expect fun String.asUtf8ToByteArray(): ByteArray
@@ -25,6 +33,10 @@ expect class ArrayIndexOutOfBoundsException(message: String?) : IndexOutOfBounds
 
 internal expect inline fun <R> synchronized(lock: Any, block: () -> R): R
 
-expect open class IOException(message: String? = null) : Exception
+expect open class IOException(message: String?, cause: Throwable?) : Exception {
+  constructor(message: String? = null)
+}
 
 expect open class EOFException(message: String? = null) : IOException
+
+expect class FileNotFoundException(message: String? = null) : IOException

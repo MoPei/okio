@@ -49,11 +49,13 @@ internal actual class SegmentedByteString internal actual constructor(
   override fun toAsciiUppercase() = toByteString().toAsciiUppercase()
 
   override fun digest(algorithm: String): ByteString {
-    val digest = MessageDigest.getInstance(algorithm)
-    forEachSegment { data, offset, byteCount ->
-      digest.update(data, offset, byteCount)
+    val digestBytes = MessageDigest.getInstance(algorithm).run {
+      forEachSegment { data, offset, byteCount ->
+        update(data, offset, byteCount)
+      }
+      digest()
     }
-    return ByteString(digest.digest())
+    return ByteString(digestBytes)
   }
 
   override fun hmac(algorithm: String, key: ByteString): ByteString {
@@ -108,8 +110,10 @@ internal actual class SegmentedByteString internal actual constructor(
 
   override fun indexOf(other: ByteArray, fromIndex: Int) = toByteString().indexOf(other, fromIndex)
 
-  override fun lastIndexOf(other: ByteArray, fromIndex: Int) = toByteString().lastIndexOf(other,
-      fromIndex)
+  override fun lastIndexOf(other: ByteArray, fromIndex: Int) = toByteString().lastIndexOf(
+    other,
+    fromIndex
+  )
 
   /** Returns a copy as a non-segmented byte string.  */
   private fun toByteString() = ByteString(toByteArray())

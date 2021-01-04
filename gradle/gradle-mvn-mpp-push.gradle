@@ -2,44 +2,36 @@ apply plugin: 'maven-publish'
 apply plugin: 'signing'
 apply plugin: 'org.jetbrains.dokka'
 
-dokka {
-  outputDirectory = "$rootDir/docs/2.x"
-  outputFormat = 'gfm'
+def dokkaConfiguration = {
+  outputDirectory.set(file("$rootDir/docs/2.x"))
 
-  multiplatform {
-    global {
-      reportUndocumented = false
-      skipDeprecated = true
-      jdkVersion = 8
+  dokkaSourceSets {
+    configureEach {
+      reportUndocumented.set(false)
+      skipDeprecated.set(true)
+      jdkVersion.set(8)
       perPackageOption {
-        prefix = "com.squareup.okio"
-        suppress = true
+        matchingRegex.set("com\\.squareup.okio.*")
+        suppress.set(true)
       }
       perPackageOption {
-        prefix = "okio.internal"
-        suppress = true
-      }
-    }
-    jvm {
-      sourceRoot {
-        // assuming there is only a single source dir...
-        path = kotlin.sourceSets.jvmMain.kotlin.srcDirs[0]
-      }
-    }
-    js {
-      sourceRoot {
-        // assuming there is only a single source dir...
-        path = kotlin.sourceSets.jsMain.kotlin.srcDirs[0]
-      }
-    }
-    'native' {
-      sourceRoot {
-        // assuming there is only a single source dir...
-        path = kotlin.sourceSets.nativeMain.kotlin.srcDirs[0]
+        matchingRegex.set("okio\\.internal.*")
+        suppress.set(true)
       }
     }
   }
 }
+
+dokkaGfm.configure(dokkaConfiguration)
+dokkaHtml.configure(dokkaConfiguration)
+
+def rootRelativePath(path) {
+  return rootProject.file(path).toString().replace('\\', '/')
+}
+
+dokkaHtml.pluginsMapConfiguration.set([
+  "org.jetbrains.dokka.base.DokkaBase": """{ "customStyleSheets": ["${rootRelativePath("docs/css/dokka-logo.css")}"], "customAssets" : ["${rootRelativePath("docs/images/logo-square.png")}"]}"""
+])
 
 def isReleaseBuild() {
   return VERSION_NAME.contains("SNAPSHOT") == false
@@ -67,9 +59,9 @@ task emptySourcesJar(type: Jar) {
   classifier = 'sources'
 }
 
-task javadocsJar(type: Jar, dependsOn: dokka) {
+task javadocsJar(type: Jar, dependsOn: dokkaGfm) {
   classifier = 'javadoc'
-  from dokka.outputDirectory
+  from dokkaGfm.outputDirectory
 }
 
 signing {
@@ -115,10 +107,10 @@ publishing {
   // Use default artifact name for the JVM target
   publications {
     kotlinMultiplatform {
-      artifactId = 'okio-multiplatform'
+      artifactId = POM_ARTIFACT_ID + '-multiplatform'
     }
     jvm {
-      artifactId = 'okio'
+      artifactId = POM_ARTIFACT_ID
     }
   }
 

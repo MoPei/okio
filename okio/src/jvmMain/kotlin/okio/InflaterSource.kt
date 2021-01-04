@@ -63,7 +63,7 @@ internal constructor(private val source: BufferedSource, private val inflater: I
    */
   @Throws(IOException::class)
   fun readOrInflate(sink: Buffer, byteCount: Long): Long {
-    require(byteCount >= 0) { "byteCount < 0: $byteCount" }
+    require(byteCount >= 0L) { "byteCount < 0: $byteCount" }
     check(!closed) { "closed" }
     if (byteCount == 0L) return 0L
 
@@ -143,4 +143,4 @@ internal constructor(private val source: BufferedSource, private val inflater: I
  * @see InflaterSource
  */
 inline fun Source.inflate(inflater: Inflater = Inflater()): InflaterSource =
-    InflaterSource(this, inflater)
+  InflaterSource(this, inflater)

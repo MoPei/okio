@@ -4,10 +4,19 @@ apply plugin: 'ru.vyarus.animalsniffer'
 kotlin.targets.matching { it.platformType.name == 'jvm' }.all { target ->
   target.project.sourceCompatibility = JavaVersion.VERSION_1_7
   target.project.targetCompatibility = JavaVersion.VERSION_1_7
-
-  tasks['jar'].configure {
-    manifest {
-      attributes('Automatic-Module-Name': 'okio')
+  
+  tasks['jvmJar'].configure { t ->
+    // the bnd task convention modifies this jar task accordingly
+    def bndConvention = bndBundleTaskConventionClass.newInstance(t);
+    // modify these lines for MANIFEST.MF properties or for specific bnd instructions
+    bndConvention.bnd = '''
+    Export-Package: okio
+    Automatic-Module-Name: okio
+    Bundle-SymbolicName: com.squareup.okio
+    '''
+    // call the convention when the task has finished to modify the jar to contain OSGi metadata
+    t.doLast {
+      bndConvention.buildBundle()
     }
   }
 
@@ -16,6 +25,7 @@ kotlin.targets.matching { it.platformType.name == 'jvm' }.all { target ->
   }
   
   target.project.dependencies {
-    signature 'org.codehaus.mojo.signature:java16:1.1@signature'
+    signature 'net.sf.androidscents.signature:android-api-level-15:4.0.3_r5@signature'
+    signature 'org.codehaus.mojo.signature:java17:1.0@signature'
   }
 }

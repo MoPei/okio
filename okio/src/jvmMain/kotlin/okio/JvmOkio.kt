@@ -32,8 +32,11 @@ import java.net.SocketTimeoutException
 import java.nio.file.Files
 import java.nio.file.OpenOption
 import java.nio.file.Path
+import java.security.MessageDigest
 import java.util.logging.Level
 import java.util.logging.Logger
+import javax.crypto.Cipher
+import javax.crypto.Mac
 
 /** Returns a sink that writes to `out`. */
 fun OutputStream.sink(): Sink = OutputStreamSink(this, Timeout())
@@ -81,8 +84,8 @@ private class InputStreamSource(
 ) : Source {
 
   override fun read(sink: Buffer, byteCount: Long): Long {
-    if (byteCount == 0L) return 0
-    require(byteCount >= 0) { "byteCount < 0: $byteCount" }
+    if (byteCount == 0L) return 0L
+    require(byteCount >= 0L) { "byteCount < 0: $byteCount" }
     try {
       timeout.throwIfReached()
       val tail = sink.writableSegment(1)
@@ -136,9 +139,9 @@ fun Socket.source(): Source {
   return timeout.source(source)
 }
 
-private class SocketAsyncTimeout(private val socket: Socket) : AsyncTimeout() {
-  private val logger = Logger.getLogger("okio.Okio")
+private val logger = Logger.getLogger("okio.Okio")
 
+private class SocketAsyncTimeout(private val socket: Socket) : AsyncTimeout() {
   override fun newTimeoutException(cause: IOException?): IOException {
     val ioe = SocketTimeoutException("timeout")
     if (cause != null) {
@@ -181,13 +184,47 @@ fun File.source(): Source = inputStream().source()
 @Throws(IOException::class)
 @IgnoreJRERequirement // Can only be invoked on Java 7+.
 fun Path.sink(vararg options: OpenOption): Sink =
-    Files.newOutputStream(this, *options).sink()
+  Files.newOutputStream(this, *options).sink()
 
 /** Returns a sink that writes to `path`. */
 @Throws(IOException::class)
 @IgnoreJRERequirement // Can only be invoked on Java 7+.
 fun Path.source(vararg options: OpenOption): Source =
-    Files.newInputStream(this, *options).source()
+  Files.newInputStream(this, *options).source()
+
+/**
+ * Returns a sink that uses [cipher] to encrypt or decrypt [this].
+ *
+ * @throws IllegalArgumentException if [cipher] isn't a block cipher.
+ */
+fun Sink.cipherSink(cipher: Cipher): CipherSink = CipherSink(this.buffer(), cipher)
+
+/**
+ * Returns a source that uses [cipher] to encrypt or decrypt [this].
+ *
+ * @throws IllegalArgumentException if [cipher] isn't a block cipher.
+ */
+fun Source.cipherSource(cipher: Cipher): CipherSource = CipherSource(this.buffer(), cipher)
+
+/**
+ * Returns a sink that uses [mac] to hash [this].
+ */
+fun Sink.hashingSink(mac: Mac): HashingSink = HashingSink(this, mac)
+
+/**
+ * Returns a source that uses [mac] to hash [this].
+ */
+fun Source.hashingSource(mac: Mac): HashingSource = HashingSource(this, mac)
+
+/**
+ * Returns a sink that uses [digest] to hash [this].
+ */
+fun Sink.hashingSink(digest: MessageDigest): HashingSink = HashingSink(this, digest)
+
+/**
+ * Returns a source that uses [digest] to hash [this].
+ */
+fun Source.hashingSource(digest: MessageDigest): HashingSource = HashingSource(this, digest)
 
 /**
  * Returns true if this error is due to a firmware bug fixed after Android 4.2.2.

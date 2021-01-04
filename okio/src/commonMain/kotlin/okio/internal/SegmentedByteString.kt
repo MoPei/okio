@@ -140,8 +140,10 @@ internal inline fun SegmentedByteString.commonToByteArray(): ByteArray {
   val result = ByteArray(size)
   var resultPos = 0
   forEachSegment { data, offset, byteCount ->
-    data.copyInto(result, destinationOffset = resultPos, startIndex = offset,
-      endIndex = offset + byteCount)
+    data.copyInto(
+      result, destinationOffset = resultPos, startIndex = offset,
+      endIndex = offset + byteCount
+    )
     resultPos += byteCount
   }
   return result
@@ -158,7 +160,7 @@ internal inline fun SegmentedByteString.commonWrite(buffer: Buffer, offset: Int,
       buffer.head!!.prev!!.push(segment)
     }
   }
-  buffer.size += size
+  buffer.size += byteCount
 }
 
 internal inline fun SegmentedByteString.commonRangeEquals(
@@ -184,7 +186,8 @@ internal inline fun SegmentedByteString.commonRangeEquals(
   byteCount: Int
 ): Boolean {
   if (offset < 0 || offset > size - byteCount ||
-    otherOffset < 0 || otherOffset > other.size - byteCount) {
+    otherOffset < 0 || otherOffset > other.size - byteCount
+  ) {
     return false
   }
   // Go segment-by-segment through this, comparing ranges of arrays.

@@ -57,6 +57,26 @@ internal constructor(data: ByteArray) : Comparable<ByteString> {
   /** Returns this byte string encoded in hexadecimal.  */
   fun hex(): String
 
+  /** Returns the 128-bit MD5 hash of this byte string.  */
+  fun md5(): ByteString
+
+  /** Returns the 160-bit SHA-1 hash of this byte string.  */
+  fun sha1(): ByteString
+
+  /** Returns the 256-bit SHA-256 hash of this byte string.  */
+  fun sha256(): ByteString
+
+  /** Returns the 512-bit SHA-512 hash of this byte string.  */
+  fun sha512(): ByteString
+
+  /** Returns the 160-bit SHA-1 HMAC of this byte string.  */
+  fun hmacSha1(key: ByteString): ByteString
+
+  /** Returns the 256-bit SHA-256 HMAC of this byte string.  */
+  fun hmacSha256(key: ByteString): ByteString
+
+  /** Returns the 512-bit SHA-512 HMAC of this byte string.  */
+  fun hmacSha512(key: ByteString): ByteString
   /**
    * Returns a byte string equal to this byte string, but with the bytes 'A' through 'Z' replaced
    * with the corresponding byte in 'a' through 'z'. Returns this byte string if it contains no
@@ -170,7 +190,7 @@ internal constructor(data: ByteArray) : Comparable<ByteString> {
     @JvmStatic
     fun String.decodeBase64(): ByteString?
 
-      /** Decodes the hex-encoded bytes and returns their value a byte string.  */
+    /** Decodes the hex-encoded bytes and returns their value a byte string.  */
     @JvmStatic
     fun String.decodeHex(): ByteString
   }
