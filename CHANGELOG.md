@@ -1,6 +1,367 @@
 Change Log
 ==========
 
+## Version 3.10.2
+
+_2025-01-08_
+
+ * Fix: `okio-nodefilesystem` artifact is no longer empty.
+
+
+## Version 3.10.1
+
+_2025-01-07_
+
+ * New: `FileSystem.close()` may prevent future access and/or clean up associated resources depending on the backing implementation. `FakeFileSystem` will prevent future operations once closed.
+ * `InputStream`s created from `BufferedSource.inputStream()` now have a more efficient version of `InputStream.transferTo()` which reduces memory copies.
+ * `okio-nodefilesystem` is no longer publised as a JS project, but a Kotlin multiplatform project with only a JS target. ~This change should not affect consumers in any way, and is motivated by the Kotlin Gradle plugin deprecating the JS-only plugin.~ Please use 3.10.2 to ensure this change actually does not affect your builds.
+
+
+## Version 3.10.0
+
+_2025-01-06_
+
+This version is equivalent to the subsequent 3.10.1, but it did not fully publish to Maven Central due to infrastructure problems.
+
+
+## Version 3.9.1
+
+_2024-09-12_
+
+ * Fix: Support paths containing a single dot (".") in `Path.relativeTo`.
+ * Fix: Do not read from the upstream source when a 0-byte read is requested.
+ * Fix: Update kotlinx.datetime to 0.6.0 to correct a Gradle module metadata problem with 0.5.0.
+   Note: this artifact is only used in 'okio-fakefilesystem' and 'okio-nodefilesystem' and not in the Okio core.
+
+
+## Version 3.9.0
+
+_2024-03-12_
+
+ * New: `FileSystem.SYSTEM` can be used in source sets that target both Kotlin/Native and
+   Kotlin/JVM. Previously, we had this symbol in each source set but it wasn't available to
+   common source sets.
+ * New: `COpaquePointer.readByteString(...)` creates a ByteString from a memory address.
+ * New: Support `InflaterSource`, `DeflaterSink`, `GzipSink`, and `GzipSource` in Kotlin/Native.
+ * New: Support openZip() on Kotlin/Native. One known bug in this implementation is that
+   `FileMetadata.lastModifiedAtMillis()` is interpreted as UTC and not the host machine's time zone.
+ * New: Prefer NTFS timestamps in ZIP file systems' metadata. This avoids the time zone problems
+   of ZIP's built-in DOS timestamps, and the 2038 time bombs of ZIP's extended timestamps.
+ * Fix: Don't leak file handles to opened JAR files open in `FileSystem.RESOURCES`.
+ * Fix: Don't throw a `NullPointerException` if `Closeable.use { ... }` returns null.
+
+
+## Version 3.8.0
+
+_2024-02-09_
+
+ * New: `TypedOptions` works like `Options`, but it returns a `T` rather than an index.
+ * Fix: Don't leave sinks open when there's a race in `Pipe.fold()`.
+
+
+## Version 3.7.0
+
+_2023-12-16_
+
+ * New: `Timeout.cancel()` prevents a timeout from firing.
+ * Breaking: Drop the `watchosX86` Kotlin/Native target. From [the Kotlin blog][watchosX86],
+   _‘This is an obsolete simulator for Intel Macs. Use the watchosX64 target instead.’_
+ * New: Add the `watchosDeviceArm64` Kotlin/Native target.
+ * New: `Timeout` APIs that accept `kotlin.time.Duration`.
+ * Upgrade: [Kotlin 1.9.21][kotlin_1_9_21].
+
+
+## Version 3.6.0
+
+_2023-10-01_
+
+ * Fix: Don't leak file handles when using `metadata` functions on `ZipFileSystem`. We had a bug
+   where we were closing the `.zip` file, but not a stream inside of it. We would have prevented
+   this bug if only we’d used `FakeFileSystem.checkNoOpenFiles()` in our tests!
+ * Fix: Don't build an index of a class loader's resources in `ResourceFileSystem.read()`. This
+   operation doesn't need this index, and building it is potentially expensive.
+ * New: Experimentally support Linux on ARM64 for Kotlin/Native targets (`linuxArm64`). Note that
+   we haven't yet added CI test coverage for this platform.
+ * Upgrade: [Kotlin 1.9.10][kotlin_1_9_10].
+
+
+## Version 1.17.6
+
+_2023-10-01_
+
+ * Fix: Don't crash decoding GZIP files when the optional extra data (`XLEN`) is 32 KiB or larger.
+
+
+## Version 3.5.0
+
+_2023-08-02_
+
+ * New: Support the WebAssembly (WASM) platform. Okio's support for WASM is experimental, but
+   improving, just like Kotlin's own support for WASM.
+ * New: Adapt WebAssembly System Interface (WASI) API's as an Okio FileSystem using
+   `WasiFileSystem`. This is in the new `okio-wasifilesystem` module. It requires the [preview1]
+   WASI API. We’ll make backwards-incompatible upgrades to new WASI API versions as they become
+   available.
+ * Fix: Return relative paths in the NIO adapter FileSystem when required. `FileSystem.list()`
+   had always returned absolute paths, even when the target directory was supplied as a relative
+   path.
+ * Fix: Don't crash when reading into an empty array using `FileHandle` on Kotlin/Native.
+ * Upgrade: [Kotlin 1.9.0][kotlin_1_9_0].
+
+
+## Version 3.4.0
+
+_2023-07-07_
+
+ * New: Adapt a Java NIO FileSystem (`java.nio.file.FileSystem`) as an Okio FileSystem using
+   `fileSystem.asOkioFileSystem()`.
+ * New: Adapt Android’s `AssetManager` as an Okio FileSystem using `AssetFileSystem`. This is in the
+   new `okio-assetfilesystem` module. Android applications should prefer this over
+   `FileSystem.RESOURCES` as it’s faster to load.
+ * Fix: Don't crash decoding GZIP files when the optional extra data (`XLEN`) is 32 KiB or larger.
+ * Fix: Resolve symlinks in `FakeFileSystem.canonicalize()`.
+ * Fix: Report the correct `createdAtMillis` in `NodeJsFileSystem` file metadata. We were
+   incorrectly using `ctimeMs`, where `c` means _changed_, not _created_.
+ * Fix: `UnsafeCursor` is now `Closeable`.
+
+
+## Version 3.3.0
+
+_2023-01-07_
+
+ * Fix: Don't leak resources when `use {}` is used with a non-local return. We introduced this
+   performance and stability bug by not considering that non-local returns execute neither the
+   `return` nor `catch` control flows.
+ * Fix: Use a sealed interface for `BufferedSink` and `BufferedSource`. These were never intended
+   for end-users to implement, and we're happy that Kotlin now allows us to express that in our API.
+ * New: Change internal locks from `synchronized` to `ReentrantLock` and `Condition`. We expect this
+   to improve help when using Okio with Java virtual threads ([Project Loom][loom]).
+ * Upgrade: [Kotlin 1.8.0][kotlin_1_8_0].
+
+
+## Version 3.2.0
+
+_2022-06-26_
+
+ * Fix: Configure the multiplatform artifact (`com.squareup.okio:okio:3.x.x`) to depend on the
+   JVM artifact (`com.squareup.okio:okio-jvm:3.x.x`) for Maven builds. This should work-around an
+   issue where Maven doesn't interpret Gradle metadata.
+ * Fix: Change `CipherSource` and `CipherSink` to recover if the cipher doesn't support streaming.
+   This should work around a crash with AES/GCM ciphers on Android.
+ * New: Enable compatibility with non-hierarchical projects.
+
+
+## Version 3.1.0
+
+_2022-04-19_
+
+ * Upgrade: [Kotlin 1.6.20][kotlin_1_6_20].
+ * New: Support [Hierarchical project structure][hierarchical_projects]. If you're using Okio in a
+   multiplatform project please upgrade your project to Kotlin 1.6.20 (or newer) to take advantage
+   of this. With hierarchical projects it's easier to use properties like `FileSystem.SYSTEM` that
+   are available on most Okio platforms but not all of them.
+ * New: `ForwardingSource` is now available on all platforms.
+ * New: The `watchosX64` platform is now supported.
+ * Fix: Don't crash in `NSData.toByteString()' when the input is empty.
+ * Fix: Support empty ZIP files in `FileSystem.openZip()`.
+ * Fix: Throw in `canonicalize()` of ZIP file systems if the path doesn't exist.
+ * Fix: Don't require ZIP files start with a local file header.
+ * New: `okio.ProtocolException` is a new exception type for multiplatform users. (It is aliased to
+   `java.net.ProtocolException` on JVM platforms).
+
+
+## Version 3.0.0
+
+_2021-10-28_
+
+This is the first stable release of Okio 3.x. This release is strongly backwards-compatible with
+Okio 2.x, and the new major version signifies new capabilities more than it does backwards
+incompatibility.
+
+Most users should be able to upgrade from 2.x by just changing the version. If you're using Okio
+in a Kotlin Multiplatform project, you'll need to drop the `-multiplatform` suffix in your Gradle
+dependencies.
+
+ * New: Remove `@ExperimentalFileSystem`. This annotation is no longer necessary as the file system
+   is no longer experimental!
+ * New: Path no longer aggressively normalizes `..` segments. Use `Path.normalize()` to apply these
+   based on the content of the path, or `FileSystem.canonicalize()` to do it honoring any symlinks
+   on a particular file system.
+ * New: Publish a [bill of materials (BOM)][bom] for Okio. Depend on this from Gradle or Maven to
+   keep all of your Okio artifacts on the same version, even if they're declared via transitive
+   dependencies. You can even omit versions when declaring other Okio dependencies.
+
+   ```kotlin
+   dependencies {
+      api(platform("com.squareup.okio:okio-bom:3.0.0"))
+      api("com.squareup.okio:okio")                // No version!
+      api("com.squareup.okio:okio-fakefilesystem") // No version!
+   }
+   ```
+
+ * New: `FileSystem.delete()` silently succeeds when deleting a file that doesn't exist. Use
+   the new `mustExist` parameter to trigger an exception instead.
+ * New: `FileSystem.createDirectories()` silently succeeds when creating a directory that already
+   exists. Use the new `mustCreate` parameter to trigger an exception instead.
+ * New: `FileSystem` offers Java-language overloads where appropriate. Previously functions that
+   had default parameters were potentially awkward to invoke from Java.
+ * New: `Timeout.intersectWith()` returns a value instead of `Unit`. This is a binary-incompatible
+   change. We expect that this public API is very rarely used outside of Okio itself.
+ * Fix: Change `BufferedSource.readDecimalLong()` to fail if the input value is just `-`. Previously
+   Okio incorrectly returned `0` for this.
+
+
+## Version 3.0.0-alpha.11
+
+_2021-10-23_
+
+ * Upgrade: [Kotlin 1.5.31][kotlin_1_5_31].
+ * Upgrade: [kotlinx-datetime 0.3.0][datetime_0_3_0]. (This is a dependency of `okio-fakefilesystem`
+   only.)
+ * New: Support creating and accessing symlinks. We were reluctant to include symlinks in our API
+   (to keep it small!) but decided that supporting them was essential to properly implement
+   recursive traversal.
+ * New: `FileMetadata.extras` can track metadata for custom `FileSystem` implementations.
+ * New: Support Apple Silicon Kotlin/Native targets (`macosArm64`, `iosSimulatorArm64`,
+   `tvosSimulatorArm64`, and `watchosSimulatorArm64`).
+ * New: `FileSystem.listRecursively()` returns a `Sequence` that includes all of a directory's
+   children, and all of their children recursively. The implementation does a lazy, depth-first
+   traversal.
+ * New: `Path.relativeTo()` computes how to get from one path to another.
+ * New: `Path.root` and `Path.segments`. These APIs decompose a path into its component parts.
+ * New: `FileSystem.listOrNull()` returns a directory's children, or null if the path doesn't
+   reference a readable directory.
+ * New: Option to fail if the file being updated doesn't already exist: `mustExist`. Use this to
+   avoid creating a new file when your intention is to update an existing file.
+ * New: Option to fail if a file being created already exists: `mustCreate`. Use this to avoid
+   updating an existing file when your intention is to create a new file.
+ * Fix: Restore support for Kotlin/JS on browser platforms. We were relying on NodeJS-only features
+   to fetch the local directory separator (`/` or `\`) and temporary directory.
+ * Fix: Don't ignore the caller's specified write offset running Okio on Kotlin/Native on Linux.
+   (`FileHandle.write()` was broken and always appended to the end of the file.)
+
+
+## Version 3.0.0-alpha.10
+
+_2021-09-09_
+
+This release drops the `-multiplatform` suffix on Kotlin Multiplatform artifacts. All artifacts now
+share the same name (like `com.squareup.okio:okio:3.0.0-alpha.10`) for both Kotlin/JVM and Kotlin
+Multiplatform.
+
+ * Fix: Don't crash in `ResourceFileSystem` when classpath `.jar` files have special characters in
+   their paths.
+
+
+## Version 3.0.0-alpha.9
+
+_2021-08-01_
+
+ * New: `ByteString.copyInto()` saves an allocation when extracting data from a `ByteString`.
+ * Fix: Create `FileHandle.protectedSize()` to match other abstract functions.
+ * Fix: Open files in binary mode on Windows. Without this, files that contain `0x1a` will be
+   truncated prematurely.
+
+
+## Version 3.0.0-alpha.8
+
+_2021-07-13_
+
+ * Fix: Don't crash on duplicate entries in a .zip file.
+ * Fix: Change `FileSystem.RESOURCES` to initialize itself lazily.
+
+
+## Version 3.0.0-alpha.7
+
+_2021-07-12_
+
+ * Fix: Change `ResourceFileSystem` to load roots eagerly. We had a bug where `list()` on the root
+   returned an empty list even if resources were present.
+ * New: `FileHandle.reposition()` can seek on a source or sink returned by that `FileHandle`.
+ * New: Move the system resources instance to `FileSystem.RESOURCES`.
+ * Upgrade: [Kotlin 1.5.20][kotlin_1_5_20].
+
+
+## Version 3.0.0-alpha.6
+
+_2021-06-01_
+
+ * New: `FileHandle` supports random access reads, writes, and resizes on files. Create an instance
+   with `FileSystem.openReadOnly()` or `FileSystem.openReadWrite()`.
+ * New: Remove `Cursor` which is obsoleted by `FileHandle`. (`UnsafeCursor` is still around!)
+ * New: Add support for the new intermediate representation (IR) artifacts in Kotlin/JS. We still
+   support the legacy artifact format.
+ * New: Support tvOS (tvosArm64, tvosX64) in multiplatform.
+ * New: Change `ResourceFileSystem` to omit `.class` files when indexing `.zip` files. We expect
+   this to lower the memory footprint of `ResourceFileSystem`.
+ * Fix: Don't crash on background thread access in Kotlin/Native. We had to apply `@SharedImmutable`
+   and run our test suite on a background thread.
+
+
+## Version 3.0.0-alpha.5
+
+_2021-04-27_
+
+ * New: Promote the `ZipFileSystem` and `ResourceFileSystem` to the main Okio module. These are
+   currently JVM-only. The `okio-zipfilesystem` module is no longer published.
+
+
+## Version 3.0.0-alpha.4
+
+_2021-04-14_
+
+ * Fix: Rename internal classes to avoid name collisions. We were seeing problems due to having
+   multiple files named `-Platform.kt`.
+
+
+## Version 3.0.0-alpha.3
+
+_2021-04-06_
+
+ * New: Move `NodeJsFileSystem` into its own module. Having it built-in prevented Okio from working
+   in a browser where there's no synchronous file system API. This is in the `okio-nodefilesystem`
+   artifact.
+
+
+## Version 3.0.0-alpha.2
+
+_2021-03-24_
+
+ * New: Require Java 8+ for Okio 3.x.
+ * New: `Cursor` supports random access reads on a `Source`.
+ * New: `FileSystem.openZip(path)` returns a file system backed by a `.zip` file. This is in the
+   `okio-zipfilesystem` artifact.
+
+
+## Version 3.0.0-alpha.1
+
+_2021-01-07_
+
+* New: Experimental file system API. The `Path`, `FileMetadata`, `FileSystem` and
+  `ForwardingFileSystem` types are subject to API changes in a future release.
+* New: Experimental `okio-fakefilesystem` artifact.
+
+
+## Version 2.10.0
+
+_2021-01-07_
+
+* New: Support Windows (mingwX64) in multiplatform.
+* New: Support watchOS (watchosArm32, watchosArm64, watchosX86) in multiplatform.
+* New: Support `HashingSource`, `HashingSink`, buffer hash functions, and `UnsafeCursor` on non-JVM
+  platforms. Previously these were all JVM-only.
+* New: Implement `Closeable` on `Sink` and `Source` on non-JVM platforms. Okio now includes a
+  multiplatform `okio.Closeable` interface and corresponding `use {}` extension. Closing resources
+  when you're done with them shouldn't be JVM-only!
+* New: `Sink.hashingSink` and `Source.hashingSource` functions that accept
+  `java.security.MessageDigest` and `javax.crypto.Mac` instances. Use these when your hash function
+  isn't built-in.
+* Fix: Don't crash with a `ShortBufferException` in `CipherSink` and `CipherSource` on Android.
+  (Android may throw a `ShortBufferException` even if the buffer is not too short. We now
+  avoid this problem!)
+* Upgrade: [Kotlin 1.4.20][kotlin_1_4_20].
+
+
 ## Version 2.9.0
 
 _2020-10-04_
@@ -34,10 +395,10 @@ _2020-07-07_
 
  * New: `Pipe.cancel()` causes in-progress and future reads and writes on the pipe to immediately
    fail with an `IOException`. The streams may still be canceled normally.
-   
+
  * New: Enlarge Okio's internal segment pool from a fixed 64 KiB total to 64 KiB per processor. For
-   example, on an Intel i9 8-core/16-thread machine the segment pool now uses up to 1 MiB of memory.  
- 
+   example, on an Intel i9 8-core/16-thread machine the segment pool now uses up to 1 MiB of memory.
+
  * New: Migrate from `synchronized` to lock-free when accessing the segment pool. Combined with the
    change above we saw throughput increase 3x on a synthetic benchmark designed to create
    contention.
@@ -83,20 +444,20 @@ _2019-12-11_
    in a crash when subsequent reads encountered an unexpected empty segment.
 
 
-### Version 2.4.1
+## Version 2.4.1
 
 _2019-10-04_
 
  * Fix: Don't cache hash code and UTF-8 string in `ByteString` on Kotlin/Native which prevented freezing.
 
-### Version 2.4.0
+## Version 2.4.0
 
 _2019-08-26_
 
  * New: Upgrade to Kotlin 1.3.50.
 
 
-### Version 2.3.0
+## Version 2.3.0
 
 _2019-07-29_
 
@@ -577,7 +938,21 @@ _2014-04-08_
  * Imported from OkHttp.
 
 
- [gradle_metadata]: https://blog.gradle.org/gradle-metadata-1.0
- [kotlin_1_4_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.10 
- [maven_provided]: https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html
- [xor_utf8]: https://github.com/square/okio/blob/bbb29c459e5ccf0f286e0b17ccdcacd7ac4bc2a9/okio/src/main/kotlin/okio/Utf8.kt#L302
+[bom]: https://docs.gradle.org/6.2/userguide/platforms.html#sub:bom_import
+[datetime_0_3_0]: https://github.com/Kotlin/kotlinx-datetime/releases/tag/v0.3.0
+[gradle_metadata]: https://blog.gradle.org/gradle-metadata-1.0
+[hierarchical_projects]: https://kotlinlang.org/docs/multiplatform-hierarchy.html
+[kotlin_1_4_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.10
+[kotlin_1_4_20]: https://github.com/JetBrains/kotlin/releases/tag/v1.4.20
+[kotlin_1_5_20]: https://github.com/JetBrains/kotlin/releases/tag/v1.5.20
+[kotlin_1_5_31]: https://github.com/JetBrains/kotlin/releases/tag/v1.5.31
+[kotlin_1_6_20]: https://blog.jetbrains.com/kotlin/2022/04/kotlin-1-6-20-released/
+[kotlin_1_8_0]: https://kotlinlang.org/docs/whatsnew18.html
+[kotlin_1_9_0]: https://kotlinlang.org/docs/whatsnew19.html
+[kotlin_1_9_10]: https://github.com/JetBrains/kotlin/releases/tag/v1.9.10
+[kotlin_1_9_21]: https://github.com/JetBrains/kotlin/releases/tag/v1.9.21
+[loom]: https://wiki.openjdk.org/display/loom/Getting+started
+[maven_provided]: https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html
+[preview1]: https://github.com/WebAssembly/WASI/blob/main/legacy/preview1/docs.md
+[watchosX86]: https://blog.jetbrains.com/kotlin/2023/02/update-regarding-kotlin-native-targets/
+[xor_utf8]: https://github.com/square/okio/blob/bbb29c459e5ccf0f286e0b17ccdcacd7ac4bc2a9/okio/src/main/kotlin/okio/Utf8.kt#L302

@@ -15,13 +15,13 @@
  */
 package okio
 
-import okio.ByteString.Companion.decodeHex
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import okio.ByteString.Companion.decodeHex
 
 /**
  * Tests solely for the behavior of Buffer's implementation. For generic BufferedSink or
@@ -48,22 +48,22 @@ class CommonBufferTest {
     assertEquals("[size=0]", Buffer().toString())
     assertEquals(
       "[text=a\\r\\nb\\nc\\rd\\\\e]",
-      Buffer().writeUtf8("a\r\nb\nc\rd\\e").toString()
+      Buffer().writeUtf8("a\r\nb\nc\rd\\e").toString(),
     )
     assertEquals(
       "[text=Tyrannosaur]",
-      Buffer().writeUtf8("Tyrannosaur").toString()
+      Buffer().writeUtf8("Tyrannosaur").toString(),
     )
     assertEquals(
       "[text=təˈranəˌsôr]",
       Buffer()
         .write("74c999cb8872616ec999cb8c73c3b472".decodeHex())
-        .toString()
+        .toString(),
     )
     assertEquals(
       "[hex=0000000000000000000000000000000000000000000000000000000000000000000000000000" +
         "0000000000000000000000000000000000000000000000000000]",
-      Buffer().write(ByteArray(64)).toString()
+      Buffer().write(ByteArray(64)).toString(),
     )
   }
 
@@ -127,10 +127,16 @@ class CommonBufferTest {
     val segmentSizes = moveBytesBetweenBuffers('a'.repeat(size), 'b'.repeat(size))
     assertEquals(
       listOf(
-        Segment.SIZE, Segment.SIZE, Segment.SIZE, 1,
-        Segment.SIZE, Segment.SIZE, Segment.SIZE, 1
+        Segment.SIZE,
+        Segment.SIZE,
+        Segment.SIZE,
+        1,
+        Segment.SIZE,
+        Segment.SIZE,
+        Segment.SIZE,
+        1,
       ),
-      segmentSizes
+      segmentSizes,
     )
   }
 
@@ -240,14 +246,14 @@ class CommonBufferTest {
     buffer.writeUtf8('b'.repeat(halfSegment))
     buffer.writeUtf8('c'.repeat(halfSegment))
     buffer.writeUtf8('d'.repeat(halfSegment))
-    assertEquals(0, buffer.indexOf('a'.toByte(), 0))
-    assertEquals((halfSegment - 1).toLong(), buffer.indexOf('a'.toByte(), (halfSegment - 1).toLong()))
-    assertEquals(halfSegment.toLong(), buffer.indexOf('b'.toByte(), (halfSegment - 1).toLong()))
-    assertEquals((halfSegment * 2).toLong(), buffer.indexOf('c'.toByte(), (halfSegment - 1).toLong()))
-    assertEquals((halfSegment * 3).toLong(), buffer.indexOf('d'.toByte(), (halfSegment - 1).toLong()))
-    assertEquals((halfSegment * 3).toLong(), buffer.indexOf('d'.toByte(), (halfSegment * 2).toLong()))
-    assertEquals((halfSegment * 3).toLong(), buffer.indexOf('d'.toByte(), (halfSegment * 3).toLong()))
-    assertEquals((halfSegment * 4 - 1).toLong(), buffer.indexOf('d'.toByte(), (halfSegment * 4 - 1).toLong()))
+    assertEquals(0, buffer.indexOf('a'.code.toByte(), 0))
+    assertEquals((halfSegment - 1).toLong(), buffer.indexOf('a'.code.toByte(), (halfSegment - 1).toLong()))
+    assertEquals(halfSegment.toLong(), buffer.indexOf('b'.code.toByte(), (halfSegment - 1).toLong()))
+    assertEquals((halfSegment * 2).toLong(), buffer.indexOf('c'.code.toByte(), (halfSegment - 1).toLong()))
+    assertEquals((halfSegment * 3).toLong(), buffer.indexOf('d'.code.toByte(), (halfSegment - 1).toLong()))
+    assertEquals((halfSegment * 3).toLong(), buffer.indexOf('d'.code.toByte(), (halfSegment * 2).toLong()))
+    assertEquals((halfSegment * 3).toLong(), buffer.indexOf('d'.code.toByte(), (halfSegment * 3).toLong()))
+    assertEquals((halfSegment * 4 - 1).toLong(), buffer.indexOf('d'.code.toByte(), (halfSegment * 4 - 1).toLong()))
   }
 
   @Test fun byteAt() {
@@ -255,11 +261,11 @@ class CommonBufferTest {
     buffer.writeUtf8("a")
     buffer.writeUtf8('b'.repeat(Segment.SIZE))
     buffer.writeUtf8("c")
-    assertEquals('a'.toLong(), buffer[0].toLong())
-    assertEquals('a'.toLong(), buffer[0].toLong()) // getByte doesn't mutate!
-    assertEquals('c'.toLong(), buffer[buffer.size - 1].toLong())
-    assertEquals('b'.toLong(), buffer[buffer.size - 2].toLong())
-    assertEquals('b'.toLong(), buffer[buffer.size - 3].toLong())
+    assertEquals('a'.code.toLong(), buffer[0].toLong())
+    assertEquals('a'.code.toLong(), buffer[0].toLong()) // getByte doesn't mutate!
+    assertEquals('c'.code.toLong(), buffer[buffer.size - 1].toLong())
+    assertEquals('b'.code.toLong(), buffer[buffer.size - 2].toLong())
+    assertEquals('b'.code.toLong(), buffer[buffer.size - 3].toLong())
   }
 
   @Test fun getByteOfEmptyBuffer() {
@@ -279,7 +285,8 @@ class CommonBufferTest {
   }
 
   @Suppress("ReplaceAssertBooleanWithAssertEquality")
-  @Test fun equalsAndHashCodeEmpty() {
+  @Test
+  fun equalsAndHashCodeEmpty() {
     val a = Buffer()
     val b = Buffer()
     assertTrue(a == b)
@@ -287,7 +294,8 @@ class CommonBufferTest {
   }
 
   @Suppress("ReplaceAssertBooleanWithAssertEquality")
-  @Test fun equalsAndHashCode() {
+  @Test
+  fun equalsAndHashCode() {
     val a = Buffer().writeUtf8("dog")
     val b = Buffer().writeUtf8("hotdog")
     assertFalse(a == b)
@@ -299,7 +307,8 @@ class CommonBufferTest {
   }
 
   @Suppress("ReplaceAssertBooleanWithAssertEquality")
-  @Test fun equalsAndHashCodeSpanningSegments() {
+  @Test
+  fun equalsAndHashCodeSpanningSegments() {
     val data = ByteArray(1024 * 1024)
     val dice = Random(0)
     dice.nextBytes(data)
@@ -323,13 +332,13 @@ class CommonBufferTest {
     val write1 = Buffer().writeUtf8(
       'a'.repeat(Segment.SIZE) +
         'b'.repeat(Segment.SIZE) +
-        'c'.repeat(Segment.SIZE)
+        'c'.repeat(Segment.SIZE),
     )
 
     val source = Buffer().writeUtf8(
       'a'.repeat(Segment.SIZE) +
         'b'.repeat(Segment.SIZE) +
-        'c'.repeat(Segment.SIZE)
+        'c'.repeat(Segment.SIZE),
     )
 
     val mockSink = MockSink()

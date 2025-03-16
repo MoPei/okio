@@ -15,6 +15,10 @@
  */
 package okio
 
+import java.io.IOException
+import java.io.OutputStream
+import java.nio.ByteBuffer
+import java.nio.charset.Charset
 import okio.internal.commonClose
 import okio.internal.commonEmit
 import okio.internal.commonEmitCompleteSegments
@@ -34,32 +38,29 @@ import okio.internal.commonWriteShort
 import okio.internal.commonWriteShortLe
 import okio.internal.commonWriteUtf8
 import okio.internal.commonWriteUtf8CodePoint
-import java.io.IOException
-import java.io.OutputStream
-import java.nio.ByteBuffer
-import java.nio.charset.Charset
 
 internal actual class RealBufferedSink actual constructor(
-  @JvmField actual val sink: Sink
+  @JvmField actual val sink: Sink,
 ) : BufferedSink {
   @JvmField val bufferField = Buffer()
+
   @JvmField actual var closed: Boolean = false
 
   @Suppress("OVERRIDE_BY_INLINE") // Prevent internal code from calling the getter.
-  override val buffer: Buffer
+  actual override val buffer: Buffer
     inline get() = bufferField
 
   override fun buffer() = bufferField
 
-  override fun write(source: Buffer, byteCount: Long) = commonWrite(source, byteCount)
-  override fun write(byteString: ByteString) = commonWrite(byteString)
-  override fun write(byteString: ByteString, offset: Int, byteCount: Int) =
+  actual override fun write(source: Buffer, byteCount: Long) = commonWrite(source, byteCount)
+  actual override fun write(byteString: ByteString) = commonWrite(byteString)
+  actual override fun write(byteString: ByteString, offset: Int, byteCount: Int) =
     commonWrite(byteString, offset, byteCount)
-  override fun writeUtf8(string: String) = commonWriteUtf8(string)
-  override fun writeUtf8(string: String, beginIndex: Int, endIndex: Int) =
+  actual override fun writeUtf8(string: String) = commonWriteUtf8(string)
+  actual override fun writeUtf8(string: String, beginIndex: Int, endIndex: Int) =
     commonWriteUtf8(string, beginIndex, endIndex)
 
-  override fun writeUtf8CodePoint(codePoint: Int) = commonWriteUtf8CodePoint(codePoint)
+  actual override fun writeUtf8CodePoint(codePoint: Int) = commonWriteUtf8CodePoint(codePoint)
 
   override fun writeString(string: String, charset: Charset): BufferedSink {
     check(!closed) { "closed" }
@@ -71,15 +72,15 @@ internal actual class RealBufferedSink actual constructor(
     string: String,
     beginIndex: Int,
     endIndex: Int,
-    charset: Charset
+    charset: Charset,
   ): BufferedSink {
     check(!closed) { "closed" }
     buffer.writeString(string, beginIndex, endIndex, charset)
     return emitCompleteSegments()
   }
 
-  override fun write(source: ByteArray) = commonWrite(source)
-  override fun write(source: ByteArray, offset: Int, byteCount: Int) =
+  actual override fun write(source: ByteArray) = commonWrite(source)
+  actual override fun write(source: ByteArray, offset: Int, byteCount: Int) =
     commonWrite(source, offset, byteCount)
 
   override fun write(source: ByteBuffer): Int {
@@ -89,19 +90,19 @@ internal actual class RealBufferedSink actual constructor(
     return result
   }
 
-  override fun writeAll(source: Source) = commonWriteAll(source)
-  override fun write(source: Source, byteCount: Long): BufferedSink = commonWrite(source, byteCount)
-  override fun writeByte(b: Int) = commonWriteByte(b)
-  override fun writeShort(s: Int) = commonWriteShort(s)
-  override fun writeShortLe(s: Int) = commonWriteShortLe(s)
-  override fun writeInt(i: Int) = commonWriteInt(i)
-  override fun writeIntLe(i: Int) = commonWriteIntLe(i)
-  override fun writeLong(v: Long) = commonWriteLong(v)
-  override fun writeLongLe(v: Long) = commonWriteLongLe(v)
-  override fun writeDecimalLong(v: Long) = commonWriteDecimalLong(v)
-  override fun writeHexadecimalUnsignedLong(v: Long) = commonWriteHexadecimalUnsignedLong(v)
-  override fun emitCompleteSegments() = commonEmitCompleteSegments()
-  override fun emit() = commonEmit()
+  actual override fun writeAll(source: Source) = commonWriteAll(source)
+  actual override fun write(source: Source, byteCount: Long): BufferedSink = commonWrite(source, byteCount)
+  actual override fun writeByte(b: Int) = commonWriteByte(b)
+  actual override fun writeShort(s: Int) = commonWriteShort(s)
+  actual override fun writeShortLe(s: Int) = commonWriteShortLe(s)
+  actual override fun writeInt(i: Int) = commonWriteInt(i)
+  actual override fun writeIntLe(i: Int) = commonWriteIntLe(i)
+  actual override fun writeLong(v: Long) = commonWriteLong(v)
+  actual override fun writeLongLe(v: Long) = commonWriteLongLe(v)
+  actual override fun writeDecimalLong(v: Long) = commonWriteDecimalLong(v)
+  actual override fun writeHexadecimalUnsignedLong(v: Long) = commonWriteHexadecimalUnsignedLong(v)
+  actual override fun emitCompleteSegments() = commonEmitCompleteSegments()
+  actual override fun emit() = commonEmit()
 
   override fun outputStream(): OutputStream {
     return object : OutputStream() {
@@ -130,11 +131,11 @@ internal actual class RealBufferedSink actual constructor(
     }
   }
 
-  override fun flush() = commonFlush()
+  actual override fun flush() = commonFlush()
 
   override fun isOpen() = !closed
 
-  override fun close() = commonClose()
-  override fun timeout() = commonTimeout()
+  actual override fun close() = commonClose()
+  actual override fun timeout() = commonTimeout()
   override fun toString() = commonToString()
 }

@@ -1,3 +1,4 @@
+// ktlint-disable filename
 /*
  * Copyright (C) 2018 Square, Inc.
  *
@@ -13,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package okio.internal
 
 import okio.ArrayIndexOutOfBoundsException
@@ -35,7 +35,7 @@ fun ByteArray.commonToUtf8String(beginIndex: Int = 0, endIndex: Int = size): Str
     chars[length++] = c
   }
 
-  return String(chars, 0, length)
+  return chars.concatToString(0, length)
 }
 
 fun String.commonAsUtf8ToByteArray(): ByteArray {
@@ -52,7 +52,7 @@ fun String.commonAsUtf8ToByteArray(): ByteArray {
       }
       return bytes.copyOf(size)
     }
-    bytes[index] = b0.toByte()
+    bytes[index] = b0.code.toByte()
   }
 
   return bytes.copyOf(length)

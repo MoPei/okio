@@ -15,7 +15,7 @@
  */
 package okio
 
-actual interface BufferedSource : Source {
+actual sealed interface BufferedSource : Source {
   actual val buffer: Buffer
 
   actual fun exhausted(): Boolean
@@ -49,6 +49,8 @@ actual interface BufferedSource : Source {
   actual fun readByteString(byteCount: Long): ByteString
 
   actual fun select(options: Options): Int
+
+  actual fun <T : Any> select(options: TypedOptions<T>): T?
 
   actual fun readByteArray(): ByteArray
 

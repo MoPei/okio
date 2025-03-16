@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-@file:JvmName("-InflaterSourceExtensions")
 @file:Suppress("NOTHING_TO_INLINE") // Aliases to public API.
 
 package okio
@@ -23,16 +22,10 @@ import java.io.IOException
 import java.util.zip.DataFormatException
 import java.util.zip.Inflater
 
-/**
- * A source that uses [DEFLATE](http://tools.ietf.org/html/rfc1951) to decompress data read from
- * another source.
- */
-class InflaterSource
-/**
- * This internal constructor shares a buffer with its trusted caller. In general we can't share a
- * `BufferedSource` because the inflater holds input bytes until they are inflated.
- */
-internal constructor(private val source: BufferedSource, private val inflater: Inflater) : Source {
+actual class InflaterSource internal actual constructor(
+  private val source: BufferedSource,
+  private val inflater: Inflater,
+) : Source {
 
   /**
    * When we call Inflater.setInput(), the inflater keeps our byte array until it needs input again.
@@ -41,10 +34,10 @@ internal constructor(private val source: BufferedSource, private val inflater: I
   private var bufferBytesHeldByInflater = 0
   private var closed = false
 
-  constructor(source: Source, inflater: Inflater) : this(source.buffer(), inflater)
+  actual constructor(source: Source, inflater: Inflater) : this(source.buffer(), inflater)
 
   @Throws(IOException::class)
-  override fun read(sink: Buffer, byteCount: Long): Long {
+  actual override fun read(sink: Buffer, byteCount: Long): Long {
     while (true) {
       val bytesInflated = readOrInflate(sink, byteCount)
       if (bytesInflated > 0) return bytesInflated
@@ -88,7 +81,7 @@ internal constructor(private val source: BufferedSource, private val inflater: I
         return bytesInflated.toLong()
       }
 
-      // We allocated a tail segment but didn't end up needing it. Recycle!
+      // We allocated a tail segment, but didn't end up needing it. Recycle!
       if (tail.pos == tail.limit) {
         sink.head = tail.pop()
         SegmentPool.recycle(tail)
@@ -126,21 +119,13 @@ internal constructor(private val source: BufferedSource, private val inflater: I
     source.skip(toRelease.toLong())
   }
 
-  override fun timeout(): Timeout = source.timeout()
+  actual override fun timeout(): Timeout = source.timeout()
 
   @Throws(IOException::class)
-  override fun close() {
+  actual override fun close() {
     if (closed) return
     inflater.end()
     closed = true
     source.close()
   }
 }
-
-/**
- * Returns an [InflaterSource] that DEFLATE-decompresses this [Source] while reading.
- *
- * @see InflaterSource
- */
-inline fun Source.inflate(inflater: Inflater = Inflater()): InflaterSource =
-  InflaterSource(this, inflater)

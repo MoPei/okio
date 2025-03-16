@@ -15,19 +15,20 @@
  */
 package okio.samples;
 
-import java.io.File;
 import java.io.IOException;
 import okio.BufferedSource;
+import okio.FileSystem;
 import okio.Okio;
+import okio.Path;
 import okio.Source;
 
 public final class ReadFileLineByLine {
   public void run() throws Exception {
-    readLines(new File("../README.md"));
+    readLines(Path.get("../README.md"));
   }
 
-  public void readLines(File file) throws IOException {
-    try (Source fileSource = Okio.source(file);
+  public void readLines(Path path) throws IOException {
+    try (Source fileSource = FileSystem.SYSTEM.source(path);
          BufferedSource bufferedFileSource = Okio.buffer(fileSource)) {
 
       while (true) {

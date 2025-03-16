@@ -28,7 +28,8 @@ import javax.crypto.spec.SecretKeySpec
  *
  * In this example we use `HashingSink` with a [BufferedSink] to make writing to the
  * sink easier.
- * ```
+ *
+ * ```java
  * HashingSink hashingSink = HashingSink.sha256(s);
  * BufferedSink bufferedSink = Okio.buffer(hashingSink);
  *
@@ -61,11 +62,11 @@ actual class HashingSink : ForwardingSink, Sink { // Need to explicitly declare 
       }
     } catch (e: InvalidKeyException) {
       throw IllegalArgumentException(e)
-    }
+    },
   )
 
   @Throws(IOException::class)
-  override fun write(source: Buffer, byteCount: Long) {
+  actual override fun write(source: Buffer, byteCount: Long) {
     checkOffsetAndCount(source.size, 0, byteCount)
 
     // Hash byteCount bytes from the prefix of source.
@@ -103,16 +104,24 @@ actual class HashingSink : ForwardingSink, Sink { // Need to explicitly declare 
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "hash"),
-    level = DeprecationLevel.ERROR
+    level = DeprecationLevel.ERROR,
   )
   fun hash() = hash
 
   actual companion object {
-    /** Returns a sink that uses the obsolete MD5 hash algorithm to produce 128-bit hashes. */
+    /**
+     * Returns a sink that uses the obsolete MD5 hash algorithm to produce 128-bit hashes.
+     *
+     * MD5 has been vulnerable to collisions since 2004. It should not be used in new code.
+     */
     @JvmStatic
     actual fun md5(sink: Sink) = HashingSink(sink, "MD5")
 
-    /** Returns a sink that uses the obsolete SHA-1 hash algorithm to produce 160-bit hashes. */
+    /**
+     * Returns a sink that uses the obsolete SHA-1 hash algorithm to produce 160-bit hashes.
+     *
+     * SHA-1 has been vulnerable to collisions since 2017. It should not be used in new code.
+     */
     @JvmStatic
     actual fun sha1(sink: Sink) = HashingSink(sink, "SHA-1")
 

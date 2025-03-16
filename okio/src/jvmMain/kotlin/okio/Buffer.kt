@@ -15,6 +15,18 @@
  */
 package okio
 
+import java.io.Closeable
+import java.io.EOFException
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
+import java.nio.ByteBuffer
+import java.nio.channels.ByteChannel
+import java.nio.charset.Charset
+import java.security.InvalidKeyException
+import java.security.MessageDigest
+import javax.crypto.Mac
+import javax.crypto.spec.SecretKeySpec
 import okio.internal.commonClear
 import okio.internal.commonClose
 import okio.internal.commonCompleteSegmentByteCount
@@ -60,18 +72,6 @@ import okio.internal.commonWriteLong
 import okio.internal.commonWriteShort
 import okio.internal.commonWriteUtf8
 import okio.internal.commonWriteUtf8CodePoint
-import java.io.Closeable
-import java.io.EOFException
-import java.io.IOException
-import java.io.InputStream
-import java.io.OutputStream
-import java.nio.ByteBuffer
-import java.nio.channels.ByteChannel
-import java.nio.charset.Charset
-import java.security.InvalidKeyException
-import java.security.MessageDigest
-import javax.crypto.Mac
-import javax.crypto.spec.SecretKeySpec
 
 actual class Buffer : BufferedSource, BufferedSink, Cloneable, ByteChannel {
   @JvmField internal actual var head: Segment? = null
@@ -106,16 +106,16 @@ actual class Buffer : BufferedSource, BufferedSink, Cloneable, ByteChannel {
 
   actual override fun emit() = this // Nowhere to emit to!
 
-  override fun exhausted() = size == 0L
+  actual override fun exhausted() = size == 0L
 
   @Throws(EOFException::class)
-  override fun require(byteCount: Long) {
+  actual override fun require(byteCount: Long) {
     if (size < byteCount) throw EOFException()
   }
 
-  override fun request(byteCount: Long) = size >= byteCount
+  actual override fun request(byteCount: Long) = size >= byteCount
 
-  override fun peek(): BufferedSource {
+  actual override fun peek(): BufferedSource {
     return PeekSource(this).buffer()
   }
 
@@ -147,7 +147,7 @@ actual class Buffer : BufferedSource, BufferedSink, Cloneable, ByteChannel {
   fun copyTo(
     out: OutputStream,
     offset: Long = 0L,
-    byteCount: Long = size - offset
+    byteCount: Long = size - offset,
   ): Buffer {
     var offset = offset
     var byteCount = byteCount
@@ -177,15 +177,15 @@ actual class Buffer : BufferedSource, BufferedSink, Cloneable, ByteChannel {
   actual fun copyTo(
     out: Buffer,
     offset: Long,
-    byteCount: Long
+    byteCount: Long,
   ): Buffer = commonCopyTo(out, offset, byteCount)
 
   actual fun copyTo(
     out: Buffer,
-    offset: Long
+    offset: Long,
   ): Buffer = copyTo(out, offset, size - offset)
 
-  /** Write `byteCount` bytes from this to `out`.  */
+  /** Write `byteCount` bytes from this to `out`. */
   @Throws(IOException::class)
   @JvmOverloads
   fun writeTo(out: OutputStream, byteCount: Long = size): Buffer {
@@ -212,14 +212,14 @@ actual class Buffer : BufferedSource, BufferedSink, Cloneable, ByteChannel {
     return this
   }
 
-  /** Read and exhaust bytes from `input` into this.  */
+  /** Read and exhaust bytes from `input` into this. */
   @Throws(IOException::class)
   fun readFrom(input: InputStream): Buffer {
     readFrom(input, Long.MAX_VALUE, true)
     return this
   }
 
-  /** Read `byteCount` bytes from `input` into this.  */
+  /** Read `byteCount` bytes from `input` into this. */
   @Throws(IOException::class)
   fun readFrom(input: InputStream, byteCount: Long): Buffer {
     require(byteCount >= 0L) { "byteCount < 0: $byteCount" }
@@ -252,52 +252,54 @@ actual class Buffer : BufferedSource, BufferedSink, Cloneable, ByteChannel {
   actual fun completeSegmentByteCount(): Long = commonCompleteSegmentByteCount()
 
   @Throws(EOFException::class)
-  override fun readByte(): Byte = commonReadByte()
+  actual override fun readByte(): Byte = commonReadByte()
 
   @JvmName("getByte")
   actual operator fun get(pos: Long): Byte = commonGet(pos)
 
   @Throws(EOFException::class)
-  override fun readShort(): Short = commonReadShort()
+  actual override fun readShort(): Short = commonReadShort()
 
   @Throws(EOFException::class)
-  override fun readInt(): Int = commonReadInt()
+  actual override fun readInt(): Int = commonReadInt()
 
   @Throws(EOFException::class)
-  override fun readLong(): Long = commonReadLong()
+  actual override fun readLong(): Long = commonReadLong()
 
   @Throws(EOFException::class)
-  override fun readShortLe() = readShort().reverseBytes()
+  actual override fun readShortLe() = readShort().reverseBytes()
 
   @Throws(EOFException::class)
-  override fun readIntLe() = readInt().reverseBytes()
+  actual override fun readIntLe() = readInt().reverseBytes()
 
   @Throws(EOFException::class)
-  override fun readLongLe() = readLong().reverseBytes()
+  actual override fun readLongLe() = readLong().reverseBytes()
 
   @Throws(EOFException::class)
-  override fun readDecimalLong(): Long = commonReadDecimalLong()
+  actual override fun readDecimalLong(): Long = commonReadDecimalLong()
 
   @Throws(EOFException::class)
-  override fun readHexadecimalUnsignedLong(): Long = commonReadHexadecimalUnsignedLong()
+  actual override fun readHexadecimalUnsignedLong(): Long = commonReadHexadecimalUnsignedLong()
 
-  override fun readByteString(): ByteString = commonReadByteString()
-
-  @Throws(EOFException::class)
-  override fun readByteString(byteCount: Long) = commonReadByteString(byteCount)
-
-  override fun select(options: Options): Int = commonSelect(options)
+  actual override fun readByteString(): ByteString = commonReadByteString()
 
   @Throws(EOFException::class)
-  override fun readFully(sink: Buffer, byteCount: Long): Unit = commonReadFully(sink, byteCount)
+  actual override fun readByteString(byteCount: Long) = commonReadByteString(byteCount)
+
+  actual override fun select(options: Options): Int = commonSelect(options)
+
+  actual override fun <T : Any> select(options: TypedOptions<T>): T? = commonSelect(options)
+
+  @Throws(EOFException::class)
+  actual override fun readFully(sink: Buffer, byteCount: Long): Unit = commonReadFully(sink, byteCount)
 
   @Throws(IOException::class)
-  override fun readAll(sink: Sink): Long = commonReadAll(sink)
+  actual override fun readAll(sink: Sink): Long = commonReadAll(sink)
 
-  override fun readUtf8() = readString(size, Charsets.UTF_8)
+  actual override fun readUtf8() = readString(size, Charsets.UTF_8)
 
   @Throws(EOFException::class)
-  override fun readUtf8(byteCount: Long) = readString(byteCount, Charsets.UTF_8)
+  actual override fun readUtf8(byteCount: Long) = readString(byteCount, Charsets.UTF_8)
 
   override fun readString(charset: Charset) = readString(size, charset)
 
@@ -326,28 +328,28 @@ actual class Buffer : BufferedSource, BufferedSink, Cloneable, ByteChannel {
   }
 
   @Throws(EOFException::class)
-  override fun readUtf8Line(): String? = commonReadUtf8Line()
+  actual override fun readUtf8Line(): String? = commonReadUtf8Line()
 
   @Throws(EOFException::class)
-  override fun readUtf8LineStrict() = readUtf8LineStrict(Long.MAX_VALUE)
+  actual override fun readUtf8LineStrict() = readUtf8LineStrict(Long.MAX_VALUE)
 
   @Throws(EOFException::class)
-  override fun readUtf8LineStrict(limit: Long): String = commonReadUtf8LineStrict(limit)
+  actual override fun readUtf8LineStrict(limit: Long): String = commonReadUtf8LineStrict(limit)
 
   @Throws(EOFException::class)
-  override fun readUtf8CodePoint(): Int = commonReadUtf8CodePoint()
+  actual override fun readUtf8CodePoint(): Int = commonReadUtf8CodePoint()
 
-  override fun readByteArray() = commonReadByteArray()
-
-  @Throws(EOFException::class)
-  override fun readByteArray(byteCount: Long): ByteArray = commonReadByteArray(byteCount)
-
-  override fun read(sink: ByteArray) = commonRead(sink)
+  actual override fun readByteArray() = commonReadByteArray()
 
   @Throws(EOFException::class)
-  override fun readFully(sink: ByteArray) = commonReadFully(sink)
+  actual override fun readByteArray(byteCount: Long): ByteArray = commonReadByteArray(byteCount)
 
-  override fun read(sink: ByteArray, offset: Int, byteCount: Int): Int =
+  actual override fun read(sink: ByteArray) = commonRead(sink)
+
+  @Throws(EOFException::class)
+  actual override fun readFully(sink: ByteArray) = commonReadFully(sink)
+
+  actual override fun read(sink: ByteArray, offset: Int, byteCount: Int): Int =
     commonRead(sink, offset, byteCount)
 
   @Throws(IOException::class)
@@ -387,15 +389,17 @@ actual class Buffer : BufferedSource, BufferedSink, Cloneable, ByteChannel {
     commonWriteUtf8CodePoint(codePoint)
 
   override fun writeString(string: String, charset: Charset) = writeString(
-    string, 0, string.length,
-    charset
+    string,
+    0,
+    string.length,
+    charset,
   )
 
   override fun writeString(
     string: String,
     beginIndex: Int,
     endIndex: Int,
-    charset: Charset
+    charset: Charset,
   ): Buffer {
     require(beginIndex >= 0) { "beginIndex < 0: $beginIndex" }
     require(endIndex >= beginIndex) { "endIndex < beginIndex: $endIndex < $beginIndex" }
@@ -410,7 +414,7 @@ actual class Buffer : BufferedSource, BufferedSink, Cloneable, ByteChannel {
   actual override fun write(
     source: ByteArray,
     offset: Int,
-    byteCount: Int
+    byteCount: Int,
   ): Buffer = commonWrite(source, offset, byteCount)
 
   @Throws(IOException::class)
@@ -432,7 +436,7 @@ actual class Buffer : BufferedSource, BufferedSink, Cloneable, ByteChannel {
   }
 
   @Throws(IOException::class)
-  override fun writeAll(source: Source): Long = commonWriteAll(source)
+  actual override fun writeAll(source: Source): Long = commonWriteAll(source)
 
   @Throws(IOException::class)
   actual override fun write(source: Source, byteCount: Long): Buffer =
@@ -460,59 +464,68 @@ actual class Buffer : BufferedSource, BufferedSink, Cloneable, ByteChannel {
   internal actual fun writableSegment(minimumCapacity: Int): Segment =
     commonWritableSegment(minimumCapacity)
 
-  override fun write(source: Buffer, byteCount: Long): Unit = commonWrite(source, byteCount)
+  actual override fun write(source: Buffer, byteCount: Long): Unit = commonWrite(source, byteCount)
 
-  override fun read(sink: Buffer, byteCount: Long): Long = commonRead(sink, byteCount)
+  actual override fun read(sink: Buffer, byteCount: Long): Long = commonRead(sink, byteCount)
 
-  override fun indexOf(b: Byte) = indexOf(b, 0, Long.MAX_VALUE)
+  actual override fun indexOf(b: Byte) = indexOf(b, 0, Long.MAX_VALUE)
 
   /**
    * Returns the index of `b` in this at or beyond `fromIndex`, or -1 if this buffer does not
    * contain `b` in that range.
    */
-  override fun indexOf(b: Byte, fromIndex: Long) = indexOf(b, fromIndex, Long.MAX_VALUE)
+  actual override fun indexOf(b: Byte, fromIndex: Long) = indexOf(b, fromIndex, Long.MAX_VALUE)
 
-  override fun indexOf(b: Byte, fromIndex: Long, toIndex: Long): Long = commonIndexOf(b, fromIndex, toIndex)
-
-  @Throws(IOException::class)
-  override fun indexOf(bytes: ByteString): Long = indexOf(bytes, 0)
+  actual override fun indexOf(b: Byte, fromIndex: Long, toIndex: Long): Long =
+    commonIndexOf(b, fromIndex, toIndex)
 
   @Throws(IOException::class)
-  override fun indexOf(bytes: ByteString, fromIndex: Long): Long = commonIndexOf(bytes, fromIndex)
+  actual override fun indexOf(bytes: ByteString): Long = indexOf(bytes, 0)
 
-  override fun indexOfElement(targetBytes: ByteString) = indexOfElement(targetBytes, 0L)
+  @Throws(IOException::class)
+  actual override fun indexOf(bytes: ByteString, fromIndex: Long): Long = commonIndexOf(bytes, fromIndex)
 
-  override fun indexOfElement(targetBytes: ByteString, fromIndex: Long): Long =
+  actual override fun indexOfElement(targetBytes: ByteString) = indexOfElement(targetBytes, 0L)
+
+  actual override fun indexOfElement(targetBytes: ByteString, fromIndex: Long): Long =
     commonIndexOfElement(targetBytes, fromIndex)
 
-  override fun rangeEquals(offset: Long, bytes: ByteString) =
+  actual override fun rangeEquals(offset: Long, bytes: ByteString) =
     rangeEquals(offset, bytes, 0, bytes.size)
 
-  override fun rangeEquals(
+  actual override fun rangeEquals(
     offset: Long,
     bytes: ByteString,
     bytesOffset: Int,
-    byteCount: Int
+    byteCount: Int,
   ): Boolean = commonRangeEquals(offset, bytes, bytesOffset, byteCount)
 
-  override fun flush() {}
+  actual override fun flush() {}
 
   override fun isOpen() = true
 
-  override fun close() {}
+  actual override fun close() {}
 
-  override fun timeout() = Timeout.NONE
+  actual override fun timeout() = Timeout.NONE
 
-  /** Returns the 128-bit MD5 hash of this buffer.  */
+  /**
+   * Returns the 128-bit MD5 hash of this buffer.
+   *
+   * MD5 has been vulnerable to collisions since 2004. It should not be used in new code.
+   */
   actual fun md5() = digest("MD5")
 
-  /** Returns the 160-bit SHA-1 hash of this buffer.  */
+  /**
+   * Returns the 160-bit SHA-1 hash of this buffer.
+   *
+   * SHA-1 has been vulnerable to collisions since 2017. It should not be used in new code.
+   */
   actual fun sha1() = digest("SHA-1")
 
-  /** Returns the 256-bit SHA-256 hash of this buffer.  */
+  /** Returns the 256-bit SHA-256 hash of this buffer. */
   actual fun sha256() = digest("SHA-256")
 
-  /** Returns the 512-bit SHA-512 hash of this buffer.  */
+  /** Returns the 512-bit SHA-512 hash of this buffer. */
   actual fun sha512() = digest("SHA-512")
 
   private fun digest(algorithm: String): ByteString {
@@ -528,13 +541,13 @@ actual class Buffer : BufferedSource, BufferedSink, Cloneable, ByteChannel {
     return ByteString(messageDigest.digest())
   }
 
-  /** Returns the 160-bit SHA-1 HMAC of this buffer.  */
+  /** Returns the 160-bit SHA-1 HMAC of this buffer. */
   actual fun hmacSha1(key: ByteString) = hmac("HmacSHA1", key)
 
-  /** Returns the 256-bit SHA-256 HMAC of this buffer.  */
+  /** Returns the 256-bit SHA-256 HMAC of this buffer. */
   actual fun hmacSha256(key: ByteString) = hmac("HmacSHA256", key)
 
-  /** Returns the 512-bit SHA-512 HMAC of this buffer.  */
+  /** Returns the 512-bit SHA-512 HMAC of this buffer. */
   actual fun hmacSha512(key: ByteString) = hmac("HmacSHA512", key)
 
   private fun hmac(algorithm: String, key: ByteString): ByteString {
@@ -567,7 +580,10 @@ actual class Buffer : BufferedSource, BufferedSink, Cloneable, ByteChannel {
 
   actual fun copy(): Buffer = commonCopy()
 
-  /** Returns a deep copy of this buffer. */
+  /**
+   * Returns a deep copy of this buffer. This is the same as [copy] but allows [Buffer] to implement
+   * the [Cloneable] interface on the JVM.
+   */
   public override fun clone(): Buffer = copy()
 
   actual fun snapshot(): ByteString = commonSnapshot()
@@ -585,7 +601,7 @@ actual class Buffer : BufferedSource, BufferedSink, Cloneable, ByteChannel {
   @Deprecated(
     message = "moved to operator function",
     replaceWith = ReplaceWith(expression = "this[index]"),
-    level = DeprecationLevel.ERROR
+    level = DeprecationLevel.ERROR,
   )
   fun getByte(index: Long) = this[index]
 
@@ -593,18 +609,23 @@ actual class Buffer : BufferedSource, BufferedSink, Cloneable, ByteChannel {
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "size"),
-    level = DeprecationLevel.ERROR
+    level = DeprecationLevel.ERROR,
   )
   fun size() = size
 
   actual class UnsafeCursor : Closeable {
     @JvmField actual var buffer: Buffer? = null
+
     @JvmField actual var readWrite: Boolean = false
 
     internal actual var segment: Segment? = null
+
     @JvmField actual var offset = -1L
+
     @JvmField actual var data: ByteArray? = null
+
     @JvmField actual var start = -1
+
     @JvmField actual var end = -1
 
     actual fun next(): Int = commonNext()

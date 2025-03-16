@@ -17,14 +17,18 @@
 // TODO move to SegmentedByteString class: https://youtrack.jetbrains.com/issue/KT-20427
 @file:Suppress("NOTHING_TO_INLINE")
 
+@file:JvmName("-SegmentedByteString") // A leading '-' hides this class from Java.
+
 package okio.internal
 
+import kotlin.jvm.JvmName
 import okio.Buffer
 import okio.ByteString
 import okio.Segment
 import okio.SegmentedByteString
 import okio.arrayRangeEquals
 import okio.checkOffsetAndCount
+import okio.resolveDefaultParameter
 
 internal fun IntArray.binarySearch(value: Int, fromIndex: Int, toIndex: Int): Int {
   var left = fromIndex
@@ -54,7 +58,7 @@ internal fun SegmentedByteString.segment(pos: Int): Int {
 
 /** Processes all segments, invoking `action` with the ByteArray and range of valid data. */
 internal inline fun SegmentedByteString.forEachSegment(
-  action: (data: ByteArray, offset: Int, byteCount: Int) -> Unit
+  action: (data: ByteArray, offset: Int, byteCount: Int) -> Unit,
 ) {
   val segmentCount = segments.size
   var s = 0
@@ -76,7 +80,7 @@ internal inline fun SegmentedByteString.forEachSegment(
 private inline fun SegmentedByteString.forEachSegment(
   beginIndex: Int,
   endIndex: Int,
-  action: (data: ByteArray, offset: Int, byteCount: Int) -> Unit
+  action: (data: ByteArray, offset: Int, byteCount: Int) -> Unit,
 ) {
   var s = segment(beginIndex)
   var pos = beginIndex
@@ -97,6 +101,7 @@ private inline fun SegmentedByteString.forEachSegment(
 // have to call these functions. Remove all this nonsense when expect class allow actual code.
 
 internal inline fun SegmentedByteString.commonSubstring(beginIndex: Int, endIndex: Int): ByteString {
+  val endIndex = resolveDefaultParameter(endIndex)
   require(beginIndex >= 0) { "beginIndex=$beginIndex < 0" }
   require(endIndex <= size) { "endIndex=$endIndex > length($size)" }
 
@@ -141,8 +146,10 @@ internal inline fun SegmentedByteString.commonToByteArray(): ByteArray {
   var resultPos = 0
   forEachSegment { data, offset, byteCount ->
     data.copyInto(
-      result, destinationOffset = resultPos, startIndex = offset,
-      endIndex = offset + byteCount
+      result,
+      destinationOffset = resultPos,
+      startIndex = offset,
+      endIndex = offset + byteCount,
     )
     resultPos += byteCount
   }
@@ -167,7 +174,7 @@ internal inline fun SegmentedByteString.commonRangeEquals(
   offset: Int,
   other: ByteString,
   otherOffset: Int,
-  byteCount: Int
+  byteCount: Int,
 ): Boolean {
   if (offset < 0 || offset > size - byteCount) return false
   // Go segment-by-segment through this, passing arrays to other's rangeEquals().
@@ -183,7 +190,7 @@ internal inline fun SegmentedByteString.commonRangeEquals(
   offset: Int,
   other: ByteArray,
   otherOffset: Int,
-  byteCount: Int
+  byteCount: Int,
 ): Boolean {
   if (offset < 0 || offset > size - byteCount ||
     otherOffset < 0 || otherOffset > other.size - byteCount
@@ -197,6 +204,22 @@ internal inline fun SegmentedByteString.commonRangeEquals(
     otherOffset += byteCount
   }
   return true
+}
+
+internal inline fun SegmentedByteString.commonCopyInto(
+  offset: Int,
+  target: ByteArray,
+  targetOffset: Int,
+  byteCount: Int,
+) {
+  checkOffsetAndCount(size.toLong(), offset.toLong(), byteCount.toLong())
+  checkOffsetAndCount(target.size.toLong(), targetOffset.toLong(), byteCount.toLong())
+  // Go segment-by-segment through this, copying ranges of arrays.
+  var targetOffset = targetOffset
+  forEachSegment(offset, offset + byteCount) { data, offset, byteCount ->
+    data.copyInto(target, targetOffset, offset, offset + byteCount)
+    targetOffset += byteCount
+  }
 }
 
 internal inline fun SegmentedByteString.commonEquals(other: Any?): Boolean {

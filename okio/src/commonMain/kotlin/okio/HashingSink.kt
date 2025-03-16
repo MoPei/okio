@@ -22,7 +22,8 @@ package okio
  *
  * In this example we use `HashingSink` with a [BufferedSink] to make writing to the
  * sink easier.
- * ```
+ *
+ * ```java
  * HashingSink hashingSink = HashingSink.sha256(s);
  * BufferedSink bufferedSink = Okio.buffer(hashingSink);
  *
@@ -41,11 +42,24 @@ expect class HashingSink : Sink {
    */
   val hash: ByteString
 
+  override fun close()
+  override fun flush()
+  override fun timeout(): Timeout
+  override fun write(source: Buffer, byteCount: Long)
+
   companion object {
-    /** Returns a sink that uses the obsolete MD5 hash algorithm to produce 128-bit hashes. */
+    /**
+     * Returns a sink that uses the obsolete MD5 hash algorithm to produce 128-bit hashes.
+     *
+     * MD5 has been vulnerable to collisions since 2004. It should not be used in new code.
+     */
     fun md5(sink: Sink): HashingSink
 
-    /** Returns a sink that uses the obsolete SHA-1 hash algorithm to produce 160-bit hashes. */
+    /**
+     * Returns a sink that uses the obsolete SHA-1 hash algorithm to produce 160-bit hashes.
+     *
+     * SHA-1 has been vulnerable to collisions since 2017. It should not be used in new code.
+     */
     fun sha1(sink: Sink): HashingSink
 
     /** Returns a sink that uses the SHA-256 hash algorithm to produce 256-bit hashes. */

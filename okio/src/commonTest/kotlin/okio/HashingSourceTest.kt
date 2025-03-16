@@ -15,15 +15,15 @@
  */
 package okio
 
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.fail
 import okio.HashingSource.Companion.hmacSha1
 import okio.HashingSource.Companion.hmacSha256
 import okio.HashingSource.Companion.hmacSha512
 import okio.HashingSource.Companion.md5
 import okio.HashingSource.Companion.sha1
 import okio.HashingSource.Companion.sha256
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.fail
 
 class HashingSourceTest {
   private val source = Buffer()
@@ -82,11 +82,11 @@ class HashingSourceTest {
     val hashingSource = sha256(source)
     val bufferedSource = hashingSource.buffer()
     source.writeUtf8("a")
-    assertEquals('a'.toLong(), bufferedSource.readUtf8CodePoint().toLong())
+    assertEquals('a'.code.toLong(), bufferedSource.readUtf8CodePoint().toLong())
     source.writeUtf8("b")
-    assertEquals('b'.toLong(), bufferedSource.readUtf8CodePoint().toLong())
+    assertEquals('b'.code.toLong(), bufferedSource.readUtf8CodePoint().toLong())
     source.writeUtf8("c")
-    assertEquals('c'.toLong(), bufferedSource.readUtf8CodePoint().toLong())
+    assertEquals('c'.code.toLong(), bufferedSource.readUtf8CodePoint().toLong())
     assertEquals(HashingTest.SHA256_abc, hashingSource.hash)
   }
 

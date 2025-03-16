@@ -15,8 +15,6 @@
  */
 package okio
 
-import kotlin.jvm.JvmField
-
 /**
  * A collection of bytes in memory.
  *
@@ -36,17 +34,11 @@ expect class Buffer() : BufferedSource, BufferedSink {
   var size: Long
     internal set
 
-  override val buffer: Buffer
-
-  override fun emitCompleteSegments(): Buffer
-
-  override fun emit(): Buffer
-
   /** Copy `byteCount` bytes from this, starting at `offset`, to `out`.  */
   fun copyTo(
     out: Buffer,
     offset: Long = 0L,
-    byteCount: Long
+    byteCount: Long,
   ): Buffer
 
   /**
@@ -55,7 +47,7 @@ expect class Buffer() : BufferedSource, BufferedSink {
    */
   fun copyTo(
     out: Buffer,
-    offset: Long = 0L
+    offset: Long = 0L,
   ): Buffer
 
   /**
@@ -75,18 +67,6 @@ expect class Buffer() : BufferedSource, BufferedSink {
 
   /** Discards `byteCount` bytes from the head of this buffer.  */
   override fun skip(byteCount: Long)
-
-  override fun write(byteString: ByteString): Buffer
-
-  override fun write(byteString: ByteString, offset: Int, byteCount: Int): Buffer
-
-  override fun writeUtf8(string: String): Buffer
-
-  override fun writeUtf8(string: String, beginIndex: Int, endIndex: Int): Buffer
-
-  override fun writeUtf8CodePoint(codePoint: Int): Buffer
-
-  override fun write(source: ByteArray): Buffer
 
   /**
    * Returns a tail segment that we can write at least `minimumCapacity`
@@ -111,29 +91,10 @@ expect class Buffer() : BufferedSource, BufferedSink {
   /** Returns the 512-bit SHA-512 HMAC of this buffer.  */
   fun hmacSha512(key: ByteString): ByteString
 
-  override fun write(source: ByteArray, offset: Int, byteCount: Int): Buffer
-
-  override fun write(source: Source, byteCount: Long): Buffer
-
-  override fun writeByte(b: Int): Buffer
-
-  override fun writeShort(s: Int): Buffer
-
-  override fun writeShortLe(s: Int): Buffer
-
-  override fun writeInt(i: Int): Buffer
-
-  override fun writeIntLe(i: Int): Buffer
-
-  override fun writeLong(v: Long): Buffer
-
-  override fun writeLongLe(v: Long): Buffer
-
-  override fun writeDecimalLong(v: Long): Buffer
-
-  override fun writeHexadecimalUnsignedLong(v: Long): Buffer
-
-  /** Returns a deep copy of this buffer.  */
+  /**
+   * Returns a deep copy of this buffer. The returned [Buffer] initially shares the underlying
+   * [ByteArray]s. See [UnsafeCursor] for more details.
+   */
   fun copy(): Buffer
 
   /** Returns an immutable copy of this buffer as a byte string.  */
@@ -142,9 +103,75 @@ expect class Buffer() : BufferedSource, BufferedSink {
   /** Returns an immutable copy of the first `byteCount` bytes of this buffer as a byte string. */
   fun snapshot(byteCount: Int): ByteString
 
-  fun readUnsafe(unsafeCursor: UnsafeCursor = UnsafeCursor()): UnsafeCursor
+  fun readUnsafe(unsafeCursor: UnsafeCursor = DEFAULT__new_UnsafeCursor): UnsafeCursor
 
-  fun readAndWriteUnsafe(unsafeCursor: UnsafeCursor = UnsafeCursor()): UnsafeCursor
+  fun readAndWriteUnsafe(unsafeCursor: UnsafeCursor = DEFAULT__new_UnsafeCursor): UnsafeCursor
+
+  override val buffer: Buffer
+  override fun close()
+  override fun emit(): Buffer
+  override fun emitCompleteSegments(): Buffer
+  override fun exhausted(): Boolean
+  override fun flush()
+  override fun indexOf(b: Byte): Long
+  override fun indexOf(b: Byte, fromIndex: Long): Long
+  override fun indexOf(b: Byte, fromIndex: Long, toIndex: Long): Long
+  override fun indexOf(bytes: ByteString): Long
+  override fun indexOf(bytes: ByteString, fromIndex: Long): Long
+  override fun indexOfElement(targetBytes: ByteString): Long
+  override fun indexOfElement(targetBytes: ByteString, fromIndex: Long): Long
+  override fun peek(): BufferedSource
+  override fun rangeEquals(offset: Long, bytes: ByteString): Boolean
+  override fun rangeEquals(offset: Long, bytes: ByteString, bytesOffset: Int, byteCount: Int): Boolean
+  override fun read(sink: Buffer, byteCount: Long): Long
+  override fun read(sink: ByteArray): Int
+  override fun read(sink: ByteArray, offset: Int, byteCount: Int): Int
+  override fun readAll(sink: Sink): Long
+  override fun readByte(): Byte
+  override fun readByteArray(): ByteArray
+  override fun readByteArray(byteCount: Long): ByteArray
+  override fun readByteString(): ByteString
+  override fun readByteString(byteCount: Long): ByteString
+  override fun readDecimalLong(): Long
+  override fun readFully(sink: Buffer, byteCount: Long)
+  override fun readFully(sink: ByteArray)
+  override fun readHexadecimalUnsignedLong(): Long
+  override fun readInt(): Int
+  override fun readIntLe(): Int
+  override fun readLong(): Long
+  override fun readLongLe(): Long
+  override fun readShort(): Short
+  override fun readShortLe(): Short
+  override fun readUtf8(): String
+  override fun readUtf8(byteCount: Long): String
+  override fun readUtf8CodePoint(): Int
+  override fun readUtf8Line(): String?
+  override fun readUtf8LineStrict(): String
+  override fun readUtf8LineStrict(limit: Long): String
+  override fun request(byteCount: Long): Boolean
+  override fun require(byteCount: Long)
+  override fun select(options: Options): Int
+  override fun <T : Any> select(options: TypedOptions<T>): T?
+  override fun timeout(): Timeout
+  override fun write(byteString: ByteString): Buffer
+  override fun write(byteString: ByteString, offset: Int, byteCount: Int): Buffer
+  override fun write(source: Buffer, byteCount: Long)
+  override fun write(source: ByteArray): Buffer
+  override fun write(source: ByteArray, offset: Int, byteCount: Int): Buffer
+  override fun write(source: Source, byteCount: Long): Buffer
+  override fun writeAll(source: Source): Long
+  override fun writeByte(b: Int): Buffer
+  override fun writeDecimalLong(v: Long): Buffer
+  override fun writeHexadecimalUnsignedLong(v: Long): Buffer
+  override fun writeInt(i: Int): Buffer
+  override fun writeIntLe(i: Int): Buffer
+  override fun writeLong(v: Long): Buffer
+  override fun writeLongLe(v: Long): Buffer
+  override fun writeShort(s: Int): Buffer
+  override fun writeShortLe(s: Int): Buffer
+  override fun writeUtf8(string: String): Buffer
+  override fun writeUtf8(string: String, beginIndex: Int, endIndex: Int): Buffer
+  override fun writeUtf8CodePoint(codePoint: Int): Buffer
 
   /**
    * A handle to the underlying data in a buffer. This handle is unsafe because it does not enforce
@@ -174,7 +201,7 @@ expect class Buffer() : BufferedSource, BufferedSink {
    *
    * New buffers are empty and have no segments:
    *
-   * ```
+   * ```kotlin
    *   val buffer = Buffer()
    * ```
    *
@@ -182,7 +209,7 @@ expect class Buffer() : BufferedSource, BufferedSink {
    * segment and writes its new data there. The lone segment has an 8 KiB byte array but only 7
    * bytes of data:
    *
-   * ```
+   * ```kotlin
    * buffer.writeUtf8("sealion")
    *
    * // [ 's', 'e', 'a', 'l', 'i', 'o', 'n', '?', '?', '?', ...]
@@ -194,7 +221,7 @@ expect class Buffer() : BufferedSource, BufferedSink {
    * to us. As bytes are read the data is consumed. The segment tracks this by adjusting its
    * internal indices.
    *
-   * ```
+   * ```kotlin
    * buffer.readUtf8(4) // "seal"
    *
    * // [ 's', 'e', 'a', 'l', 'i', 'o', 'n', '?', '?', '?', ...]
@@ -207,7 +234,7 @@ expect class Buffer() : BufferedSource, BufferedSink {
    * segments. Each segment has its own start and end indexes tracking where the user's data begins
    * and ends.
    *
-   * ```
+   * ```kotlin
    * val xoxo = new Buffer()
    * xoxo.writeUtf8("xo".repeat(5_000))
    *
@@ -231,7 +258,7 @@ expect class Buffer() : BufferedSource, BufferedSink {
    * you may see its effects. In this example, one of the "xoxo" segments above is reused in an
    * unrelated buffer:
    *
-   * ```
+   * ```kotlin
    * val abc = new Buffer()
    * abc.writeUtf8("abc")
    *
@@ -240,11 +267,11 @@ expect class Buffer() : BufferedSource, BufferedSink {
    * // start = 0     end = 3
    * ```
    *
-   * There is an optimization in `Buffer.clone()` and other methods that allows two segments to
+   * There is an optimization in `Buffer.copy()` and other methods that allows two segments to
    * share the same underlying byte array. Clones can't write to the shared byte array; instead they
    * allocate a new (private) segment early.
    *
-   * ```
+   * ```kotlin
    * val nana = new Buffer()
    * nana.writeUtf8("na".repeat(2_500))
    * nana.readUtf8(2) // "na"
@@ -253,7 +280,7 @@ expect class Buffer() : BufferedSource, BufferedSink {
    * //              ^                                  ^
    * //           start = 2                         end = 5000
    *
-   * nana2 = nana.clone()
+   * nana2 = nana.copy()
    * nana2.writeUtf8("batman")
    *
    * // [ 'n', 'a', 'n', 'a', ..., 'n', 'a', 'n', 'a', '?', '?', '?', ...]
@@ -288,7 +315,7 @@ expect class Buffer() : BufferedSource, BufferedSink {
    * [use] extension function. In this example we read all of the bytes in a buffer into a byte
    * array:
    *
-   * ```
+   * ```kotlin
    * val bufferBytes = ByteArray(buffer.size.toInt())
    *
    * buffer.readUnsafe().use { cursor ->
@@ -337,15 +364,20 @@ expect class Buffer() : BufferedSource, BufferedSink {
    * You can reuse instances of this class if you like. Use the overloads of [Buffer.readUnsafe] and
    * [Buffer.readAndWriteUnsafe] that take a cursor and close it after use.
    */
-  class UnsafeCursor constructor() {
-    @JvmField var buffer: Buffer?
-    @JvmField var readWrite: Boolean
+  class UnsafeCursor constructor() : Closeable {
+    var buffer: Buffer?
+
+    var readWrite: Boolean
 
     internal var segment: Segment?
-    @JvmField var offset: Long
-    @JvmField var data: ByteArray?
-    @JvmField var start: Int
-    @JvmField var end: Int
+
+    var offset: Long
+
+    var data: ByteArray?
+
+    var start: Int
+
+    var end: Int
 
     /**
      * Seeks to the next range of bytes, advancing the offset by `end - start`. Returns the size of
@@ -403,6 +435,6 @@ expect class Buffer() : BufferedSource, BufferedSink {
      */
     fun expandBuffer(minByteCount: Int): Long
 
-    fun close()
+    override fun close()
   }
 }

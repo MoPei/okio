@@ -15,16 +15,16 @@
  */
 package okio
 
+import kotlin.test.assertFailsWith
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import kotlin.test.assertFailsWith
 
 class BufferKotlinTest {
   @Test fun get() {
     val actual = Buffer().writeUtf8("abc")
-    assertThat(actual[0]).isEqualTo('a'.toByte())
-    assertThat(actual[1]).isEqualTo('b'.toByte())
-    assertThat(actual[2]).isEqualTo('c'.toByte())
+    assertThat(actual[0]).isEqualTo('a'.code.toByte())
+    assertThat(actual[1]).isEqualTo('b'.code.toByte())
+    assertThat(actual[2]).isEqualTo('c'.code.toByte())
     assertFailsWith<IndexOutOfBoundsException> {
       actual[-1]
     }

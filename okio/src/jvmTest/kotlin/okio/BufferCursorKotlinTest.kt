@@ -15,32 +15,21 @@
  */
 package okio
 
-import okio.Buffer.UnsafeCursor
-import okio.TestUtil.deepCopy
-import org.junit.Assume.assumeTrue
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.junit.runners.Parameterized.Parameter
-import org.junit.runners.Parameterized.Parameters
+import app.cash.burst.Burst
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
+import okio.Buffer.UnsafeCursor
+import okio.TestUtil.deepCopy
+import org.junit.Assume.assumeTrue
+import org.junit.Test
 
-@RunWith(Parameterized::class)
-class BufferCursorKotlinTest {
-  companion object {
-    @Parameters(name = "{0}")
-    @JvmStatic
-    fun parameters(): List<Array<out Any?>> {
-      return BufferFactory.values().map { arrayOf(it) }
-    }
-  }
-
-  @Parameter lateinit var bufferFactory: BufferFactory
-
+@Burst
+class BufferCursorKotlinTest(
+  private val bufferFactory: BufferFactory,
+) {
   @Test fun acquireReadOnlyDoesNotCopySharedDataArray() {
     val buffer = deepCopy(bufferFactory.newBuffer())
     assumeTrue(buffer.size > 0L)
@@ -97,7 +86,7 @@ class BufferCursorKotlinTest {
 
     buffer.readAndWriteUnsafe().use { cursor ->
       while (cursor.next() != -1) {
-        cursor.data!!.fill('x'.toByte(), cursor.start, cursor.end)
+        cursor.data!!.fill('x'.code.toByte(), cursor.start, cursor.end)
       }
     }
 

@@ -17,8 +17,11 @@
 // TODO move to RealBufferedSource class: https://youtrack.jetbrains.com/issue/KT-20427
 @file:Suppress("NOTHING_TO_INLINE")
 
+@file:JvmName("-RealBufferedSource") // A leading '-' hides this class from Java.
+
 package okio.internal
 
+import kotlin.jvm.JvmName
 import okio.Buffer
 import okio.BufferedSource
 import okio.ByteString
@@ -36,6 +39,7 @@ internal inline fun RealBufferedSource.commonRead(sink: Buffer, byteCount: Long)
   check(!closed) { "closed" }
 
   if (buffer.size == 0L) {
+    if (byteCount == 0L) return 0L
     val read = source.read(buffer, Segment.SIZE.toLong())
     if (read == -1L) return -1L
   }
@@ -131,6 +135,7 @@ internal inline fun RealBufferedSource.commonRead(sink: ByteArray, offset: Int, 
   checkOffsetAndCount(sink.size.toLong(), offset.toLong(), byteCount.toLong())
 
   if (buffer.size == 0L) {
+    if (byteCount == 0) return 0
     val read = source.read(buffer, Segment.SIZE.toLong())
     if (read == -1L) return -1
   }
@@ -178,7 +183,7 @@ internal inline fun RealBufferedSource.commonReadUtf8(byteCount: Long): String {
 }
 
 internal inline fun RealBufferedSource.commonReadUtf8Line(): String? {
-  val newline = indexOf('\n'.toByte())
+  val newline = indexOf('\n'.code.toByte())
 
   return if (newline == -1L) {
     if (buffer.size != 0L) {
@@ -194,11 +199,11 @@ internal inline fun RealBufferedSource.commonReadUtf8Line(): String? {
 internal inline fun RealBufferedSource.commonReadUtf8LineStrict(limit: Long): String {
   require(limit >= 0) { "limit < 0: $limit" }
   val scanLength = if (limit == Long.MAX_VALUE) Long.MAX_VALUE else limit + 1
-  val newline = indexOf('\n'.toByte(), 0, scanLength)
+  val newline = indexOf('\n'.code.toByte(), 0, scanLength)
   if (newline != -1L) return buffer.readUtf8Line(newline)
   if (scanLength < Long.MAX_VALUE &&
-    request(scanLength) && buffer[scanLength - 1] == '\r'.toByte() &&
-    request(scanLength + 1) && buffer[scanLength] == '\n'.toByte()
+    request(scanLength) && buffer[scanLength - 1] == '\r'.code.toByte() &&
+    request(scanLength + 1) && buffer[scanLength] == '\n'.code.toByte()
   ) {
     return buffer.readUtf8Line(scanLength) // The line was 'limit' UTF-8 bytes followed by \r\n.
   }
@@ -206,7 +211,7 @@ internal inline fun RealBufferedSource.commonReadUtf8LineStrict(limit: Long): St
   buffer.copyTo(data, 0, okio.minOf(32, buffer.size))
   throw EOFException(
     "\\n not found: limit=" + minOf(buffer.size, limit) +
-      " content=" + data.readByteString().hex() + '…'.toString()
+      " content=" + data.readByteString().hex() + '…'.toString(),
   )
 }
 
@@ -259,10 +264,10 @@ internal inline fun RealBufferedSource.commonReadDecimalLong(): Long {
   var pos = 0L
   while (request(pos + 1)) {
     val b = buffer[pos]
-    if ((b < '0'.toByte() || b > '9'.toByte()) && (pos != 0L || b != '-'.toByte())) {
+    if ((b < '0'.code.toByte() || b > '9'.code.toByte()) && (pos != 0L || b != '-'.code.toByte())) {
       // Non-digit, or non-leading negative sign.
       if (pos == 0L) {
-        throw NumberFormatException("Expected leading [0-9] or '-' character but was 0x${b.toString(16)}")
+        throw NumberFormatException("Expected a digit or '-' but was 0x${b.toString(16)}")
       }
       break
     }
@@ -278,9 +283,9 @@ internal inline fun RealBufferedSource.commonReadHexadecimalUnsignedLong(): Long
   var pos = 0
   while (request((pos + 1).toLong())) {
     val b = buffer[pos.toLong()]
-    if ((b < '0'.toByte() || b > '9'.toByte()) &&
-      (b < 'a'.toByte() || b > 'f'.toByte()) &&
-      (b < 'A'.toByte() || b > 'F'.toByte())
+    if ((b < '0'.code.toByte() || b > '9'.code.toByte()) &&
+      (b < 'a'.code.toByte() || b > 'f'.code.toByte()) &&
+      (b < 'A'.code.toByte() || b > 'F'.code.toByte())
     ) {
       // Non-digit, or non-leading negative sign.
       if (pos == 0) {
@@ -363,7 +368,7 @@ internal inline fun RealBufferedSource.commonRangeEquals(
   offset: Long,
   bytes: ByteString,
   bytesOffset: Int,
-  byteCount: Int
+  byteCount: Int,
 ): Boolean {
   check(!closed) { "closed" }
 

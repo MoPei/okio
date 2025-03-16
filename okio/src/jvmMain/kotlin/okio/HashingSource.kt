@@ -29,7 +29,8 @@ import javax.crypto.spec.SecretKeySpec
  *
  * In this example we use `HashingSource` with a [BufferedSource] to make reading
  * from the source easier.
- * ```
+ *
+ * ```java
  * HashingSource hashingSource = HashingSource.sha256(rawSource);
  * BufferedSource bufferedSource = Okio.buffer(hashingSource);
  *
@@ -62,11 +63,11 @@ actual class HashingSource : ForwardingSource, Source { // Need to explicitly de
       }
     } catch (e: InvalidKeyException) {
       throw IllegalArgumentException(e)
-    }
+    },
   )
 
   @Throws(IOException::class)
-  override fun read(sink: Buffer, byteCount: Long): Long {
+  actual override fun read(sink: Buffer, byteCount: Long): Long {
     val result = super.read(sink, byteCount)
 
     if (result != -1L) {
@@ -114,16 +115,24 @@ actual class HashingSource : ForwardingSource, Source { // Need to explicitly de
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "hash"),
-    level = DeprecationLevel.ERROR
+    level = DeprecationLevel.ERROR,
   )
   fun hash() = hash
 
   actual companion object {
-    /** Returns a source that uses the obsolete MD5 hash algorithm to produce 128-bit hashes. */
+    /**
+     * Returns a source that uses the obsolete MD5 hash algorithm to produce 128-bit hashes.
+     *
+     * MD5 has been vulnerable to collisions since 2004. It should not be used in new code.
+     */
     @JvmStatic
     actual fun md5(source: Source) = HashingSource(source, "MD5")
 
-    /** Returns a source that uses the obsolete SHA-1 hash algorithm to produce 160-bit hashes. */
+    /**
+     * Returns a source that uses the obsolete SHA-1 hash algorithm to produce 160-bit hashes.
+     *
+     * SHA-1 has been vulnerable to collisions since 2017. It should not be used in new code.
+     */
     @JvmStatic
     actual fun sha1(source: Source) = HashingSource(source, "SHA-1")
 

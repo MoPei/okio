@@ -22,7 +22,7 @@ Timeout is on all platforms, but only the JVM has a useful implementation.
 Available on all platforms.
 
 
-### Filesystem
+### File System
 
 Available on all platforms. For JavaScript this requires [Node.js][node_js].
 
@@ -38,3 +38,29 @@ Okio uses the built-in implementations of these functions on the JVM.
 [kotlin_multiplatform]: https://kotlinlang.org/docs/reference/multiplatform.html
 [mingw]: http://www.mingw.org/
 [node_js]: https://nodejs.org/api/fs.html
+
+## Gradle configuration
+
+```kotlin
+// build.gradle.kts
+kotlin {
+    sourceSets {
+        val okioVersion = "3.XXX"
+        val commonMain by getting {
+            dependencies {
+                implementation("com.squareup.okio:okio:$okioVersion")
+            }
+        }
+        val jsMain by getting {
+            dependencies {
+                implementation("com.squareup.okio:okio-nodefilesystem:$okioVersion")
+            }
+        }
+        val commonTest by getting {
+            dependencies {
+                implementation("com.squareup.okio:okio-fakefilesystem:$okioVersion")
+            }
+        }
+    }
+}
+```

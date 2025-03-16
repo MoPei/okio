@@ -36,7 +36,7 @@ class CommonRealBufferedSourceTest {
       ).buffer()
 
     assertEquals(6, buffer.size)
-    assertEquals(-1, bufferedSource.indexOf('e'.toByte(), 0, 4))
+    assertEquals(-1, bufferedSource.indexOf('e'.code.toByte(), 0, 4))
     assertEquals(2, buffer.size)
   }
 
@@ -141,7 +141,7 @@ class CommonRealBufferedSourceTest {
     val write3 = Buffer().writeUtf8("c".repeat(Segment.SIZE))
 
     val source = Buffer().writeUtf8(
-      "${"a".repeat(Segment.SIZE)}${"b".repeat(Segment.SIZE)}${"c".repeat(Segment.SIZE)}"
+      "${"a".repeat(Segment.SIZE)}${"b".repeat(Segment.SIZE)}${"c".repeat(Segment.SIZE)}",
     )
 
     val mockSink = MockSink()
@@ -150,7 +150,34 @@ class CommonRealBufferedSourceTest {
     mockSink.assertLog(
       "write($write1, ${write1.size})",
       "write($write2, ${write2.size})",
-      "write($write3, ${write3.size})"
+      "write($write3, ${write3.size})",
     )
+  }
+
+  @Test fun readZeroBytesIntoBufferDoesNotRefillBuffer() {
+    val source = Buffer()
+    source.writeUtf8("abc")
+
+    val sink = Buffer()
+
+    val bufferedSource = (source as Source).buffer()
+    assertEquals(0L, bufferedSource.read(sink, 0L))
+
+    assertEquals(0, sink.size)
+    assertEquals(0, bufferedSource.buffer.size)
+    assertEquals(3, source.size)
+  }
+
+  @Test fun readZeroBytesIntoByteArrayDoesNotRefillBuffer() {
+    val source = Buffer()
+    source.writeUtf8("abc")
+
+    val sink = ByteArray(1024)
+
+    val bufferedSource = (source as Source).buffer()
+    assertEquals(0, bufferedSource.read(sink, 0, 0))
+
+    assertEquals(0, bufferedSource.buffer.size)
+    assertEquals(3, source.size)
   }
 }

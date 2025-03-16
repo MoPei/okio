@@ -17,29 +17,27 @@ package okio
 
 import java.io.IOException
 
-/** A [Source] which forwards calls to another. Useful for subclassing. */
-abstract class ForwardingSource(
-  /** [Source] to which this instance is delegating. */
+actual abstract class ForwardingSource actual constructor(
   @get:JvmName("delegate")
-  val delegate: Source
+  actual val delegate: Source,
 ) : Source {
   // TODO 'Source by delegate' once https://youtrack.jetbrains.com/issue/KT-23935 is fixed.
 
   @Throws(IOException::class)
-  override fun read(sink: Buffer, byteCount: Long): Long = delegate.read(sink, byteCount)
+  actual override fun read(sink: Buffer, byteCount: Long): Long = delegate.read(sink, byteCount)
 
-  override fun timeout() = delegate.timeout()
+  actual override fun timeout() = delegate.timeout()
 
   @Throws(IOException::class)
-  override fun close() = delegate.close()
+  actual override fun close() = delegate.close()
 
-  override fun toString() = "${javaClass.simpleName}($delegate)"
+  actual override fun toString() = "${javaClass.simpleName}($delegate)"
 
   @JvmName("-deprecated_delegate")
   @Deprecated(
     message = "moved to val",
     replaceWith = ReplaceWith(expression = "delegate"),
-    level = DeprecationLevel.ERROR
+    level = DeprecationLevel.ERROR,
   )
   fun delegate() = delegate
 }

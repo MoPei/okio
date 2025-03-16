@@ -20,7 +20,6 @@
 
 package okio
 
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
@@ -31,19 +30,20 @@ import java.net.Socket
 import java.net.SocketTimeoutException
 import java.nio.file.Files
 import java.nio.file.OpenOption
-import java.nio.file.Path
+import java.nio.file.Path as NioPath
 import java.security.MessageDigest
 import java.util.logging.Level
 import java.util.logging.Logger
 import javax.crypto.Cipher
 import javax.crypto.Mac
+import okio.internal.ResourceFileSystem
 
 /** Returns a sink that writes to `out`. */
 fun OutputStream.sink(): Sink = OutputStreamSink(this, Timeout())
 
 private class OutputStreamSink(
   private val out: OutputStream,
-  private val timeout: Timeout
+  private val timeout: Timeout,
 ) : Sink {
 
   override fun write(source: Buffer, byteCount: Long) {
@@ -78,9 +78,9 @@ private class OutputStreamSink(
 /** Returns a source that reads from `in`. */
 fun InputStream.source(): Source = InputStreamSource(this, Timeout())
 
-private class InputStreamSource(
+private open class InputStreamSource(
   private val input: InputStream,
-  private val timeout: Timeout
+  private val timeout: Timeout,
 ) : Source {
 
   override fun read(sink: Buffer, byteCount: Long): Long {
@@ -178,18 +178,16 @@ fun File.appendingSink(): Sink = FileOutputStream(this, true).sink()
 
 /** Returns a source that reads from `file`. */
 @Throws(FileNotFoundException::class)
-fun File.source(): Source = inputStream().source()
-
-/** Returns a source that reads from `path`. */
-@Throws(IOException::class)
-@IgnoreJRERequirement // Can only be invoked on Java 7+.
-fun Path.sink(vararg options: OpenOption): Sink =
-  Files.newOutputStream(this, *options).sink()
+fun File.source(): Source = InputStreamSource(inputStream(), Timeout.NONE)
 
 /** Returns a sink that writes to `path`. */
 @Throws(IOException::class)
-@IgnoreJRERequirement // Can only be invoked on Java 7+.
-fun Path.source(vararg options: OpenOption): Source =
+fun NioPath.sink(vararg options: OpenOption): Sink =
+  Files.newOutputStream(this, *options).sink()
+
+/** Returns a source that reads from `path`. */
+@Throws(IOException::class)
+fun NioPath.source(vararg options: OpenOption): Source =
   Files.newInputStream(this, *options).source()
 
 /**
@@ -225,6 +223,8 @@ fun Sink.hashingSink(digest: MessageDigest): HashingSink = HashingSink(this, dig
  * Returns a source that uses [digest] to hash [this].
  */
 fun Source.hashingSource(digest: MessageDigest): HashingSource = HashingSource(this, digest)
+
+fun ClassLoader.asResourceFileSystem(): FileSystem = ResourceFileSystem(this, indexEagerly = true)
 
 /**
  * Returns true if this error is due to a firmware bug fixed after Android 4.2.2.

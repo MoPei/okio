@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:JvmName("-ByteString") // A leading '-' hides this class from Java.
 
 package okio.internal
 
+import kotlin.jvm.JvmName
 import okio.BASE64_URL_SAFE
 import okio.Buffer
 import okio.ByteString
@@ -28,6 +30,7 @@ import okio.decodeBase64ToArray
 import okio.encodeBase64
 import okio.isIsoControl
 import okio.processUtf8CodePoints
+import okio.resolveDefaultParameter
 import okio.shr
 import okio.toUtf8String
 
@@ -62,7 +65,7 @@ internal inline fun ByteString.commonHex(): String {
     result[c++] = HEX_DIGIT_CHARS[b shr 4 and 0xf]
     result[c++] = HEX_DIGIT_CHARS[b       and 0xf] // ktlint-disable no-multi-spaces
   }
-  return String(result)
+  return result.concatToString()
 }
 
 @Suppress("NOTHING_TO_INLINE")
@@ -71,7 +74,7 @@ internal inline fun ByteString.commonToAsciiLowercase(): ByteString {
   var i = 0
   while (i < data.size) {
     var c = data[i]
-    if (c < 'A'.toByte() || c > 'Z'.toByte()) {
+    if (c < 'A'.code.toByte() || c > 'Z'.code.toByte()) {
       i++
       continue
     }
@@ -81,7 +84,7 @@ internal inline fun ByteString.commonToAsciiLowercase(): ByteString {
     lowercase[i++] = (c - ('A' - 'a')).toByte()
     while (i < lowercase.size) {
       c = lowercase[i]
-      if (c < 'A'.toByte() || c > 'Z'.toByte()) {
+      if (c < 'A'.code.toByte() || c > 'Z'.code.toByte()) {
         i++
         continue
       }
@@ -99,7 +102,7 @@ internal inline fun ByteString.commonToAsciiUppercase(): ByteString {
   var i = 0
   while (i < data.size) {
     var c = data[i]
-    if (c < 'a'.toByte() || c > 'z'.toByte()) {
+    if (c < 'a'.code.toByte() || c > 'z'.code.toByte()) {
       i++
       continue
     }
@@ -109,7 +112,7 @@ internal inline fun ByteString.commonToAsciiUppercase(): ByteString {
     lowercase[i++] = (c - ('a' - 'A')).toByte()
     while (i < lowercase.size) {
       c = lowercase[i]
-      if (c < 'a'.toByte() || c > 'z'.toByte()) {
+      if (c < 'a'.code.toByte() || c > 'z'.code.toByte()) {
         i++
         continue
       }
@@ -123,6 +126,7 @@ internal inline fun ByteString.commonToAsciiUppercase(): ByteString {
 
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun ByteString.commonSubstring(beginIndex: Int, endIndex: Int): ByteString {
+  val endIndex = resolveDefaultParameter(endIndex)
   require(beginIndex >= 0) { "beginIndex < 0" }
   require(endIndex <= data.size) { "endIndex > length(${data.size})" }
 
@@ -152,7 +156,7 @@ internal inline fun ByteString.commonRangeEquals(
   offset: Int,
   other: ByteString,
   otherOffset: Int,
-  byteCount: Int
+  byteCount: Int,
 ): Boolean = other.rangeEquals(otherOffset, this.data, offset, byteCount)
 
 @Suppress("NOTHING_TO_INLINE")
@@ -160,13 +164,23 @@ internal inline fun ByteString.commonRangeEquals(
   offset: Int,
   other: ByteArray,
   otherOffset: Int,
-  byteCount: Int
+  byteCount: Int,
 ): Boolean {
   return (
     offset >= 0 && offset <= data.size - byteCount &&
       otherOffset >= 0 && otherOffset <= other.size - byteCount &&
       arrayRangeEquals(data, offset, other, otherOffset, byteCount)
     )
+}
+
+@Suppress("NOTHING_TO_INLINE")
+internal inline fun ByteString.commonCopyInto(
+  offset: Int,
+  target: ByteArray,
+  targetOffset: Int,
+  byteCount: Int,
+) {
+  data.copyInto(target, targetOffset, offset, offset + byteCount)
 }
 
 @Suppress("NOTHING_TO_INLINE")
@@ -199,11 +213,12 @@ internal inline fun ByteString.commonIndexOf(other: ByteArray, fromIndex: Int): 
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun ByteString.commonLastIndexOf(
   other: ByteString,
-  fromIndex: Int
+  fromIndex: Int,
 ) = lastIndexOf(other.internalArray(), fromIndex)
 
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun ByteString.commonLastIndexOf(other: ByteArray, fromIndex: Int): Int {
+  val fromIndex = resolveDefaultParameter(fromIndex)
   val limit = data.size - other.size
   for (i in minOf(fromIndex, limit) downTo 0) {
     if (arrayRangeEquals(data, i, other, 0, other.size)) {
@@ -255,6 +270,7 @@ internal inline fun commonOf(data: ByteArray) = ByteString(data.copyOf())
 
 @Suppress("NOTHING_TO_INLINE")
 internal inline fun ByteArray.commonToByteString(offset: Int, byteCount: Int): ByteString {
+  val byteCount = resolveDefaultParameter(byteCount)
   checkOffsetAndCount(size.toLong(), offset.toLong(), byteCount.toLong())
   return ByteString(copyOfRange(offset, offset + byteCount))
 }
@@ -332,7 +348,7 @@ private fun codePointIndexToCharIndex(s: ByteArray, codePointCount: Int): Int {
       return charCount
     }
 
-    if ((c != '\n'.toInt() && c != '\r'.toInt() && isIsoControl(c)) ||
+    if ((c != '\n'.code && c != '\r'.code && isIsoControl(c)) ||
       c == REPLACEMENT_CODE_POINT
     ) {
       return -1
